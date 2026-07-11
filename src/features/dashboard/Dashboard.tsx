@@ -19,6 +19,7 @@ import type {
   PetState,
 } from "../../types/domain";
 import type { View } from "../../app/types";
+import { remoteAiEnabled } from "../../app/demoConfig";
 import { Meter } from "../../components/ui/Meter";
 import type { AiCoachError, AiCoachResponse } from "../../lib/ai/coach";
 import type {
@@ -111,6 +112,13 @@ export function Dashboard({
   }, [activePlanItemsKey, activePlanItems]);
 
   async function askAiCoach() {
+    if (!remoteAiEnabled) {
+      const fallback = createLocalCoachResponse(petContext);
+      setPetLine(fallback.petLine);
+      setCoach({ kind: "success", response: fallback });
+      return;
+    }
+
     setCoach({ kind: "loading", message: "Asking AI coach for a flexible plan..." });
     try {
       const response = await fetch("/api/coach", {
@@ -170,6 +178,14 @@ export function Dashboard({
   }
 
   async function askDailyPlan() {
+    if (!remoteAiEnabled) {
+      const fallback = createLocalDailyPlan(petContext);
+      setPetLine(fallback.petLine);
+      setCompletedRecipeSteps({});
+      setDailyPlan({ kind: "success", response: fallback });
+      return;
+    }
+
     setDailyPlan({ kind: "loading", message: "Building today's recipe and usage tasks..." });
     try {
       const response = await fetch("/api/daily-plan", {

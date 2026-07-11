@@ -10,6 +10,7 @@ import type {
   StorageLocation,
 } from "../../types/domain";
 import type { View } from "../../app/types";
+import { remoteAiEnabled } from "../../app/demoConfig";
 import {
   mockPhotoCandidates,
   mockReceiptCandidates,
@@ -145,6 +146,15 @@ export function AddItems({ items, onAdd, onNavigate }: AddItemsProps) {
       kind: "loading",
       message: `Recognizing ${aiMode === "receipt" ? "receipt" : "food photo"}...`,
     });
+
+    if (!remoteAiEnabled) {
+      loadCandidates(aiMode);
+      setRecognitionStatus({
+        kind: "success",
+        message: `${file.name} accepted. Static QR demo uses stable mock recognition so every judge gets the same flow.`,
+      });
+      return;
+    }
 
     try {
       const imageDataUrl = await fileToDataUrl(file);

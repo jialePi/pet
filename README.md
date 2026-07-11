@@ -12,7 +12,7 @@ Users can add food manually, from mock receipt/photo flows, or through AI image 
 - AI daily plan with recipe steps and synchronized inventory tasks.
 - Purchase guard for duplicates and too much high-risk food.
 - Demo date controls for testing future planning.
-- Optional Google AI Studio / OpenAI-backed image recognition and coaching.
+- Static QR demo mode with mock recognition and rule-based AI coach/daily plan fallback.
 - Local-first storage for hackathon demo use.
 
 ## Run Locally
@@ -25,6 +25,10 @@ npm run dev
 Open the local URL printed by Vite.
 
 ## Optional AI Setup
+
+The stable QR demo does not require remote AI. By default, image upload uses mock recognition and the AI coach/daily plan use local rule fallbacks.
+
+Remote AI is only for local experimentation unless a backend API is deployed.
 
 ```bash
 cp .env.example .env.local
