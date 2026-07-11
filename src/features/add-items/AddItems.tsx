@@ -305,24 +305,23 @@ export function AddItems({
     <section className="add-layout">
       <div className="section-heading">
         <div>
-          <span className="eyebrow">Waste prevention entry</span>
-          <h1>Shopping Check first</h1>
+          <span className="eyebrow">Prevent waste before it starts</span>
+          <h1>Check & Add</h1>
         </div>
       </div>
 
       <section className="shopping-plan-panel" aria-labelledby="shopping-plan-title">
         <div className="shopping-plan-copy">
-          <span className="eyebrow">Pet purchase guard</span>
-          <h2 id="shopping-plan-title">Check the cart before buying</h2>
+          <span className="eyebrow">Before buying</span>
+          <h2 id="shopping-plan-title">Check your shopping list</h2>
           <p>
-            Paste a planned shop before buying. The pet looks for the decisions
-            most likely to create waste: duplicates, too much high-risk food, or
-            items that should be used before you shop again.
+            Paste what you plan to buy. The pet looks for duplicate food,
+            risky extras, and items you should use before adding more.
           </p>
         </div>
         <div className="shopping-plan-input">
           <label>
-            Planned purchases
+            Shopping list
             <textarea
               value={shoppingPlanText}
               onChange={(event) => setShoppingPlanText(event.target.value)}
@@ -335,7 +334,7 @@ export function AddItems({
             onClick={checkShoppingPlan}
             disabled={!shoppingPlanText.trim()}
           >
-            <ShoppingBasket aria-hidden="true" /> Check for waste risks
+            <ShoppingBasket aria-hidden="true" /> Check list
           </button>
         </div>
         {shoppingPlanResults.length > 0 && (
@@ -363,6 +362,13 @@ export function AddItems({
           </div>
         )}
       </section>
+
+      <div className="subsection-heading">
+        <div>
+          <span className="eyebrow">After buying or checking the fridge</span>
+          <h2>Scan food</h2>
+        </div>
+      </div>
 
       <div className="upload-grid">
         <AiImageDropzone
@@ -399,19 +405,19 @@ export function AddItems({
             <ShieldAlert aria-hidden="true" />
           </div>
           <div>
-            <span className="eyebrow">Pet purchase guard</span>
+            <span className="eyebrow">Before buying</span>
             <h2>Pause. This could become waste.</h2>
             <p>{guard.result.message}</p>
             <p className="privacy-note">
-              Default path: use, freeze, share, reduce, or check what is already
-              there. Buying anyway is allowed, but recorded as an override.
+              Safer path: use, freeze, share, reduce, or check what is already
+              there. Buying anyway is allowed, but it is recorded as an override.
             </p>
             <div className="action-row">
               <button className="primary" onClick={() => onNavigate("inventory")}>
-                Review existing inventory
+                Open inventory
               </button>
               <button className="override-button" onClick={overrideGuardAdd}>
-                Buy anyway override
+                Buy anyway
               </button>
               <button onClick={() => setGuard(undefined)}>Cancel</button>
             </div>
@@ -458,7 +464,7 @@ export function AddItems({
       )}
 
       <section className="manual-form" aria-label="Manual item form">
-        <h2>Add after check</h2>
+        <h2>Add food</h2>
         <label>
           Name
           <input
@@ -549,7 +555,7 @@ export function AddItems({
           </label>
         </div>
         <button className="primary" onClick={submit} disabled={!draft.name.trim()}>
-          <PackagePlus aria-hidden="true" /> Add checked item
+          <PackagePlus aria-hidden="true" /> Add food
         </button>
       </section>
     </section>
@@ -589,11 +595,10 @@ function ShoppingPlanCard({
       <h3>{result.draft.name}</h3>
       <p>{result.petLine}</p>
       <p className="suggestion">{result.nextStep}</p>
-      <small>{result.message}</small>
       <div className="action-row">
         {result.decision === "ok" ? (
           <button className="primary" onClick={onAddAnyway}>
-            Add after buying
+            Add to inventory
           </button>
         ) : (
           <>
@@ -612,12 +617,14 @@ function ShoppingPlanCard({
               {result.decision === "reduce"
                 ? "Reduce quantity"
                 : result.decision === "check"
-                  ? "Check inventory first"
+                  ? "I checked"
                   : "Skip purchase"}
             </button>
-            <button onClick={onReviewInventory}>Check inventory</button>
+            {result.decision !== "check" && (
+              <button onClick={onReviewInventory}>Open inventory</button>
+            )}
             <button className="override-button" onClick={onAddAnyway}>
-              Buy anyway override
+              Buy anyway
             </button>
           </>
         )}

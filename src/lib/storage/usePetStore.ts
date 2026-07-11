@@ -32,7 +32,7 @@ type PetStore = {
   pet: PetState;
   petReaction: PetReaction;
   lastToast?: string;
-  addManualItem: (draft: InventoryItemDraft, today?: IsoDate) => void;
+  addManualItem: (draft: InventoryItemDraft) => void;
   updateInventoryItem: (
     item: InventoryItem,
     patch: Partial<InventoryItemDraft>,
@@ -101,23 +101,47 @@ export const usePetStore = create<PetStore>()(
       purchaseDecisions: [],
       pet: demoPet,
       petReaction: createPetReaction("waiting", "Koko is ready to help with today's rescue."),
-      addManualItem: (draft, today = todayIso()) => {
+      addManualItem: (draft) => {
         const item = toInventoryItem(draft);
         const nextItems = [item, ...get().items];
         set({
           items: nextItems,
-          pet: calculatePetState({
-            current: get().pet,
-            items: nextItems,
-            actions: get().actions,
-            today,
-          }),
+          pet: get().pet,
           petReaction: createPetReaction("wave", `${item.name} added. Koko is ready to plan it.`),
-          lastToast: `${item.name} added. Pet trust +2`,
+          lastToast: `${item.name} added for planning.`,
         });
       },
       updateInventoryItem: (item, patch, today = todayIso()) => {
         const now = new Date().toISOString();
+        const adjustmentActions: FoodAction[] = [];
+        if (
+          patch.suggestedUseByDate !== undefined &&
+          patch.suggestedUseByDate !== item.suggestedUseByDate
+        ) {
+          adjustmentActions.push({
+            id: createId("action"),
+            itemId: item.id,
+            type: "date_adjusted",
+            quantity: item.quantity,
+            unit: item.unit,
+            occurredAt: actionOccurredAt(today),
+            note: "Suggested use date adjusted from inventory editor.",
+          });
+        }
+        if (
+          patch.quantity !== undefined &&
+          Number(patch.quantity) !== item.quantity
+        ) {
+          adjustmentActions.push({
+            id: createId("action"),
+            itemId: item.id,
+            type: "quantity_adjusted",
+            quantity: Number(patch.quantity),
+            unit: item.unit,
+            occurredAt: actionOccurredAt(today),
+            note: "Quantity adjusted from inventory editor.",
+          });
+        }
         const nextItems = get().items.map((candidate) =>
           candidate.id === item.id
             ? {
@@ -141,12 +165,14 @@ export const usePetStore = create<PetStore>()(
               }
             : candidate,
         );
+        const nextActions = [...adjustmentActions, ...get().actions];
         set({
           items: nextItems,
+          actions: nextActions,
           pet: calculatePetState({
             current: get().pet,
             items: nextItems,
-            actions: get().actions,
+            actions: nextActions,
             today,
           }),
           petReaction: createPetReaction("review", `${patch.name ?? item.name} updated. Koko is watching the change.`),
@@ -155,10 +181,12 @@ export const usePetStore = create<PetStore>()(
       },
       recordAction: (item, type, quantity, note, today = todayIso()) => {
         const usage = applyInventoryAction(item, type, quantity);
+        const effectiveType =
+          type === "partially_used" && usage.item.status === "used" ? "used" : type;
         const action: FoodAction = {
           id: createId("action"),
           itemId: item.id,
-          type,
+          type: effectiveType,
           quantity: usage.actionQuantity,
           unit: item.unit,
           occurredAt: actionOccurredAt(today),
@@ -175,20 +203,18 @@ export const usePetStore = create<PetStore>()(
           today,
         });
         const label =
-          type === "partially_used"
-            ? usage.item.status === "used"
-              ? `${item.name} finished. ${describeActionReward("used")}`
-              : `${item.name} check-in saved. ${describeActionReward("partially_used")}`
-            : type === "used"
-              ? `${item.name} rescued. ${describeActionReward(type)}`
-              : type === "frozen"
-                ? `${item.name} frozen. ${describeActionReward(type)}`
-                : type === "shared"
-                  ? `${item.name} shared. ${describeActionReward(type)}`
-                  : type === "checked"
-                    ? `${item.name} checked. ${describeActionReward(type)}`
-                    : `${item.name} recorded. We'll plan earlier next time.`;
-        const reaction = reactionIntentForAction(type, item.name);
+          effectiveType === "partially_used"
+            ? `${item.name} check-in saved. ${describeActionReward(effectiveType)}`
+            : effectiveType === "used"
+              ? `${item.name} rescued. ${describeActionReward(effectiveType)}`
+              : effectiveType === "frozen"
+                ? `${item.name} frozen. ${describeActionReward(effectiveType)}`
+                : effectiveType === "shared"
+                  ? `${item.name} shared. ${describeActionReward(effectiveType)}`
+                  : effectiveType === "checked"
+                    ? `${item.name} checked. ${describeActionReward(effectiveType)}`
+                    : `${item.name} discarded. Pet mood -12`;
+        const reaction = reactionIntentForAction(effectiveType, item.name);
         set({
           items: nextItems,
           actions: nextActions,
@@ -218,7 +244,7 @@ export const usePetStore = create<PetStore>()(
               : input.decision === "checked_inventory"
                 ? `${input.itemName} flagged for fridge check. Pet trust +3`
                 : input.decision === "bought_anyway"
-                  ? `${input.itemName} bought anyway. I will track the risk.`
+                  ? `${input.itemName} bought anyway. Pet mood -3`
                   : `${input.itemName} approved for planned shop.`;
         const reaction = reactionIntentForPurchaseDecision(input.decision, input.itemName);
         set({

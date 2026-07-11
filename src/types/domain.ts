@@ -165,7 +165,6 @@ export type PlanReasonCode =
   | "PAST_SUGGESTED_DATE"
   | "HIGH_RISK_CATEGORY"
   | "LARGE_QUANTITY"
-  | "SKIPPED_BEFORE"
   | "UNKNOWN_DATE"
   | "CHECKED_TODAY"
   | "EASY_ACTION";

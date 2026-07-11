@@ -117,7 +117,15 @@ export function calculatePetState(input: PetStateInput): PetState {
     ["used", "partially_used", "frozen", "shared"].includes(action.type),
   );
   const engagedToday = actionsToday.some((action) =>
-    ["used", "partially_used", "frozen", "shared", "checked"].includes(action.type),
+    [
+      "used",
+      "partially_used",
+      "frozen",
+      "shared",
+      "checked",
+      "date_adjusted",
+      "quantity_adjusted",
+    ].includes(action.type),
   );
   const shouldApplyRiskPenalty =
     highRiskItems.length > 0 &&
@@ -142,7 +150,7 @@ export function calculatePetState(input: PetStateInput): PetState {
     ? input.current.lastStreakDate === input.today
       ? input.current.streakDays
       : input.current.streakDays + 1
-    : highRiskItems.length === 0
+    : engagedToday || highRiskItems.length === 0
       ? input.current.streakDays
       : 0;
 
@@ -162,7 +170,7 @@ export function calculatePetState(input: PetStateInput): PetState {
     ].slice(-200),
     lastStreakDate: rescueActionToday
       ? input.today
-      : highRiskItems.length === 0
+      : engagedToday || highRiskItems.length === 0
         ? input.current.lastStreakDate
         : undefined,
     lastRiskPenaltyDate: shouldApplyRiskPenalty

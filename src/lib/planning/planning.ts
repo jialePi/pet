@@ -69,10 +69,6 @@ export function calculatePriorityScore(
 
   const quantityPressure =
     item.quantity >= 5 ? 8 : item.quantity >= 2 ? 4 : 0;
-  const skipCount = actions.filter(
-    (action) => action.itemId === item.id && action.type === "date_adjusted",
-  ).length;
-  const skipPenalty = Math.min(skipCount * 5, 15);
   const checkedTodayBoost = wasCheckedToday(item.id, actions, today) ? 12 : 0;
   const dateConfidence = item.confidence.suggestedUseByDate ?? 0;
   const confidenceAdjustment =
@@ -84,7 +80,6 @@ export function calculatePriorityScore(
     dateUrgency[risk] +
     categoryRisk[item.category] +
     quantityPressure +
-    skipPenalty +
     checkedTodayBoost +
     confidenceAdjustment -
     actionFriction
@@ -107,9 +102,6 @@ export function getReasonCodes(
   if (item.quantity >= 5) codes.push("LARGE_QUANTITY");
   if (risk === "unknown") codes.push("UNKNOWN_DATE");
   if (wasCheckedToday(item.id, actions, today)) codes.push("CHECKED_TODAY");
-  if (actions.some((action) => action.itemId === item.id && action.type === "date_adjusted")) {
-    codes.push("SKIPPED_BEFORE");
-  }
   if (["bakery", "produce", "dairy"].includes(item.category)) {
     codes.push("EASY_ACTION");
   }
@@ -199,7 +191,7 @@ export function generatePlan(input: PlanningInput): PlanningOutput {
     .sort((a, b) => b.priorityScore - a.priorityScore);
 
   return {
-    today: planItems.slice(0, 5),
+    today: planItems.filter((item) => item.riskLevel !== "stable").slice(0, 5),
     week: planItems.slice(0, 12),
     review: planItems.filter((item) => item.riskLevel === "unknown"),
   };

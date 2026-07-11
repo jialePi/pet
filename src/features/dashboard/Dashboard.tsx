@@ -21,6 +21,7 @@ import type {
 } from "../../types/domain";
 import type { View } from "../../app/types";
 import { remoteAiEnabled } from "../../app/demoConfig";
+import { daysUntil } from "../../lib/dates/dates";
 import type {
   AiDailyPlanError,
   AiDailyPlanResponse,
@@ -89,11 +90,15 @@ export function Dashboard({
         .join("|"),
     [activePlanItems],
   );
-  const useToday = missions.filter((mission) => mission.urgencyLabel === "Today").length;
+  const useByToday = activePlanItems.filter((item) =>
+    isUseByTodayItem(item, today),
+  ).length;
+  const urgentMissionCount = missions.filter((mission) => mission.urgencyLabel === "Today").length;
   const thisWeek = missions.filter((mission) => mission.urgencyLabel !== "Stable").length;
   const wasteBrief = createWasteBrief(missions);
   const petContext = { availableItems, activePlanItems, frozenItems, missions, pet };
-  const hasUrgentMissions = useToday > 0;
+  const hasUrgentMissions = urgentMissionCount > 0;
+  const hasMissions = missions.length > 0;
   const displayVisualState = getDisplayVisualState(
     pet.visualState,
     hasUrgentMissions,
@@ -232,28 +237,32 @@ export function Dashboard({
   }
 
   return (
-    <section className="dashboard-grid">
-      <section className="waste-brief" aria-label="Waste prevention brief">
-        <div>
-          <span className="eyebrow">Waste decision brief</span>
-          <h1>Today: {wasteBrief.riskCount} waste risks</h1>
-          <p>{wasteBrief.summary}</p>
-        </div>
-        <div className="waste-brief-metrics">
-          <WasteBriefMetric label="Potential waste avoided" value={wasteBrief.itemsLabel} />
-          <WasteBriefMetric label="Best action" value={wasteBrief.bestAction} />
-        </div>
-        <button className="primary" onClick={() => onNavigate("add")}>
-          <ShoppingBasket aria-hidden="true" /> Run shopping check
-        </button>
-      </section>
+    <section className={`dashboard-grid${hasMissions ? "" : " calm-dashboard"}`}>
+      {hasMissions && (
+        <section className="waste-brief" aria-label="Waste prevention brief">
+          <div>
+            <span className="eyebrow">Today</span>
+            <h1>Today: {wasteBrief.riskCount} waste risks</h1>
+            <p>{wasteBrief.summary}</p>
+          </div>
+          <div className="waste-brief-metrics">
+            <WasteBriefMetric label="Potential waste avoided" value={wasteBrief.itemsLabel} />
+            <WasteBriefMetric label="Best action" value={wasteBrief.bestAction} />
+          </div>
+          <button className="primary" onClick={() => onNavigate("add")}>
+            <ShoppingBasket aria-hidden="true" /> Check shopping list
+          </button>
+        </section>
+      )}
 
       <section className={`pet-room ${displayVisualState}`} aria-label="Pet room">
         <div className="room-scene">
-          <div className="fridge">
-            <span>today</span>
-            <strong>{useToday}</strong>
-          </div>
+          {hasMissions && (
+            <div className="fridge">
+              <span>today</span>
+              <strong>{urgentMissionCount}</strong>
+            </div>
+          )}
           <button
             className="pet-avatar"
             onClick={() => setPetLine(getPetMessage("mission", petContext))}
@@ -280,7 +289,7 @@ export function Dashboard({
               <MessageCircle aria-hidden="true" /> Today's clue
             </button>
             <button onClick={() => setPetLine(getPetMessage("shopping", petContext))}>
-              <ShoppingBasket aria-hidden="true" /> Shopping check
+              <ShoppingBasket aria-hidden="true" /> Before shopping
             </button>
             <button onClick={() => void askDailyPlan()}>
               <ChefHat aria-hidden="true" /> Rescue plan
@@ -313,8 +322,10 @@ export function Dashboard({
       <section className="mission-panel" aria-labelledby="missions-title">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">Waste blockers</span>
-            <h1 id="missions-title">Today's rescue decisions</h1>
+            <span className="eyebrow">{hasMissions ? "Save today" : "All clear"}</span>
+            <h1 id="missions-title">
+              {hasMissions ? "Food to save today" : "Before you shop"}
+            </h1>
           </div>
           <button className="icon-button" onClick={onResetDemo} title="Reload demo pantry">
             <RotateCcw aria-hidden="true" />
@@ -345,27 +356,29 @@ export function Dashboard({
         )}
       </section>
 
-      <aside className="pulse-panel" aria-label="Waste blocker pulse">
-        <span className="eyebrow">Waste blocker pulse</span>
-        <div className="pulse-stat">
-          <strong>{availableItems.length}</strong>
-          <span>available items</span>
-        </div>
-        <div className="pulse-row">
-          <span>Use today</span>
-          <strong>{useToday}</strong>
-        </div>
-        <div className="pulse-row">
-          <span>This week</span>
-          <strong>{thisWeek}</strong>
-        </div>
-        <button className="primary wide" onClick={() => onNavigate("add")}>
-          <ShieldCheck aria-hidden="true" /> Shopping check
-        </button>
-        <button className="wide" onClick={() => onNavigate("inventory")}>
-          <PackagePlus aria-hidden="true" /> Review food
-        </button>
-      </aside>
+      {hasMissions && (
+        <aside className="pulse-panel" aria-label="Kitchen snapshot">
+          <span className="eyebrow">Kitchen snapshot</span>
+          <div className="pulse-stat">
+            <strong>{availableItems.length}</strong>
+            <span>available items</span>
+          </div>
+          <div className="pulse-row">
+            <span>Use by today</span>
+            <strong>{useByToday}</strong>
+          </div>
+          <div className="pulse-row">
+            <span>This week</span>
+            <strong>{thisWeek}</strong>
+          </div>
+          <button className="primary wide" onClick={() => onNavigate("add")}>
+            <ShieldCheck aria-hidden="true" /> Check shopping list
+          </button>
+          <button className="wide" onClick={() => onNavigate("inventory")}>
+            <PackagePlus aria-hidden="true" /> Open inventory
+          </button>
+        </aside>
+      )}
     </section>
   );
 }
@@ -411,6 +424,12 @@ function WasteBriefMetric({ label, value }: { label: string; value: string }) {
       <strong>{value}</strong>
     </div>
   );
+}
+
+function isUseByTodayItem(item: InventoryItem, today: IsoDate): boolean {
+  const dateConfidence = item.confidence.suggestedUseByDate ?? 0;
+  if (!item.suggestedUseByDate || dateConfidence < 0.5) return false;
+  return daysUntil(item.suggestedUseByDate, today) <= 0;
 }
 
 type PetMessageKind = "mission" | "shopping" | "mood";
@@ -540,7 +559,7 @@ function getPetReaction(
   }
   return {
     title: "Steady",
-    message: "Keep shopping checks small and rescue one item at a time.",
+    message: "Check the list before buying, then rescue one item at a time.",
   };
 }
 
@@ -836,17 +855,22 @@ function MissionEmptyState({
 }) {
   if (availableCount > 0) {
     return (
-      <div className="empty-state">
-        <PawPrint aria-hidden="true" />
-        <h2>No urgent rescue right now</h2>
-        <p>
-          {frozenCount > 0
-            ? `${frozenCount} frozen item is parked in inventory. Advance the demo date or review inventory when you want to cook it.`
-            : "Available food is stable today. Advance the demo date to test future missions."}
-        </p>
-        <button className="primary" onClick={onInventory}>
-          Review inventory
-        </button>
+      <div className="empty-state calm-empty-state">
+        <div>
+          <span className="eyebrow">Next step</span>
+          <h2>Check your list before buying</h2>
+          <p>
+            {frozenCount > 0
+              ? `${frozenCount} frozen item is parked safely. No rescue is needed until you plan to cook it.`
+              : "Available food is stable. Keep the list honest before the next shop."}
+          </p>
+        </div>
+        <div className="empty-state-actions">
+          <button className="primary" onClick={onAdd}>
+            <ShieldCheck aria-hidden="true" /> Check shopping list
+          </button>
+          <button onClick={onInventory}>Review inventory</button>
+        </div>
       </div>
     );
   }

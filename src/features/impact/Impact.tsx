@@ -41,7 +41,7 @@ export function Impact({ impact, pet }: ImpactProps) {
         />
         <ImpactCard
           icon={<ShoppingBasket />}
-          label="Shopping checks"
+          label="Lists checked before buying"
           value={impact.shoppingCheckCount}
         />
         <ImpactCard icon={<IceCreamBowl />} label="Frozen before expiry risk" value={impact.frozenItemCount} />

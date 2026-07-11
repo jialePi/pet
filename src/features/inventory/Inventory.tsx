@@ -286,6 +286,7 @@ function getDisplayRiskLabel(
 ): string {
   if (item.status === "frozen") return "frozen pause";
   if (item.status !== "active") return "completed";
+  if (risk === "use_today") return "use by today";
   return risk.replace(/_/g, " ");
 }
 

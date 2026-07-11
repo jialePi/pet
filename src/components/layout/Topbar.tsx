@@ -137,19 +137,19 @@ export function Topbar({
       </div>
       <nav aria-label="Main navigation">
         <button className={view === "dashboard" ? "active" : ""} onClick={() => onNavigate("dashboard")}>
-          Dashboard
+          Home
         </button>
         <button className={view === "add" ? "active" : ""} onClick={() => onNavigate("add")}>
-          Add
+          Check & Add
         </button>
         <button className={view === "inventory" ? "active" : ""} onClick={() => onNavigate("inventory")}>
           Inventory
         </button>
         <button className={view === "impact" ? "active" : ""} onClick={() => onNavigate("impact")}>
-          Impact
+          Results
         </button>
         <button className={view === "settings" ? "active" : ""} onClick={() => onNavigate("settings")}>
-          AI Settings
+          AI
         </button>
       </nav>
       </header>

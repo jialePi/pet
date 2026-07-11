@@ -141,7 +141,7 @@ Non-target user:
 
 Goal: stop waste before it enters the home.
 
-1. User opens `Add` or `Shopping check`.
+1. User opens `Check & Add`.
 2. User types or uploads planned purchases.
 3. AI/rules detect possible duplicate or overbuying.
 4. Pet responds with a clear objection.
@@ -369,13 +369,13 @@ Recommended sections:
 
 ### Add Page
 
-Split add modes into:
+Split Check & Add into:
 
-- `Receipt/photo`
-- `Shopping plan`
-- `Manual risky item`
+- `Before buying`: shopping list check.
+- `Scan food`: receipt/photo candidates.
+- `Add food`: manual item form.
 
-The shopping plan mode should be visually prominent because it supports prevention.
+The Before buying section should be visually prominent because it supports prevention.
 
 ### Inventory Page
 

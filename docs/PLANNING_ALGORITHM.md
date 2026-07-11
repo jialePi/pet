@@ -52,7 +52,7 @@ priorityScore =
   dateUrgency
   + categoryRisk
   + quantityPressure
-  + skipPenalty
+  + checkedTodayBoost
   + confidenceAdjustment
   - actionFriction
 ```
@@ -88,9 +88,9 @@ medium:         +4
 small:          +0
 ```
 
-### skipPenalty
+### checkedTodayBoost
 
-每延后一次：`+5`，最多 `+15`。
+当天已经 `checked` 但还没有完成 use/freeze/share/discard 后续决策时：`+12`。
 
 ### confidenceAdjustment
 
@@ -121,8 +121,8 @@ easy to freeze:         +2
 - `PAST_SUGGESTED_DATE`
 - `HIGH_RISK_CATEGORY`
 - `LARGE_QUANTITY`
-- `SKIPPED_BEFORE`
 - `UNKNOWN_DATE`
+- `CHECKED_TODAY`
 - `EASY_ACTION`
 
 示例：

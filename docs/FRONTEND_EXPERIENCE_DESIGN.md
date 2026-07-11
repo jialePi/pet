@@ -14,9 +14,9 @@
 
 ```text
 ┌────────────────────────────────────────────────────────────┐
-│ Header: pet / Add / Inventory / Plan / Impact / Settings   │
+│ Header: pet / Home / Check & Add / Inventory / Results / AI │
 ├───────────────────────┬───────────────────┬────────────────┤
-│ Pet Room              │ Today's Missions  │ Inventory Pulse│
+│ Pet Room              │ Food to save      │ Kitchen snapshot│
 │                       │                   │                │
 │ animated pet          │ mission cards     │ use today: 2   │
 │ kitchen/fridge scene  │ primary actions   │ this week: 5   │
@@ -30,9 +30,9 @@
 ┌────────────────────┐
 │ Pet Room           │
 ├────────────────────┤
-│ Today's Missions   │
+│ Food to save       │
 ├────────────────────┤
-│ Inventory Pulse    │
+│ Kitchen snapshot   │
 ├────────────────────┤
 │ Bottom Navigation  │
 └────────────────────┘
@@ -81,25 +81,25 @@
 
 ## 核心页面
 
-### Dashboard
+### Home
 
 必须显示：
 
 - 宠物房间。
 - 今日任务 1 到 3 个。
-- 添加物品按钮。
+- Check & Add 入口。
 - 库存风险摘要。
 - 减少浪费成果。
 
 首屏目标：用户 5 秒内知道今天要先做什么。
 
-### Add Items
+### Check & Add
 
-三个入口：
+三个区块：
 
-- 上传小票。
-- 上传照片。
-- 手动添加。
+- Before buying: 检查购物清单，优先阻止重复购买。
+- Scan food: 上传小票或照片。
+- Add food: 手动添加。
 
 识别结果必须进入确认页，不能直接入库。
 

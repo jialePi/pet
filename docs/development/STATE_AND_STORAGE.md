@@ -56,6 +56,8 @@ lib/storage/usePetStore.ts
 
 - `partially_used`: 扣减数量；剩余为 0 时转为 `used`。
 - `checked`: 不改变库存状态或数量，只记录用户完成质量/日期检查。
+- `date_adjusted`: 不改变库存状态，记录建议使用日期被修正。
+- `quantity_adjusted`: 不改变库存状态，记录数量被修正。
 - `used`: 转为 `used`。
 - `frozen`: 转为 `frozen`，数量不变，`storageLocation` 改为 `freezer`。
 - `shared`: 转为 `shared`。
@@ -87,6 +89,8 @@ AI daily plan 是临时执行层：
 
 - 冻结食物提升 energy/trust，但不继续制造 hungry 状态。
 - 检查食物提升 trust，但不是 rescue completion，不增加 streak。
+- 修正日期或数量提升 trust，但不是 rescue completion，不增加 streak。
+- 添加新物品只创建 planning 输入，不直接改变 pet score。
 - 没有 active high-risk item 时不惩罚用户。
 
 ## 清除数据

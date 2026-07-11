@@ -6,7 +6,7 @@ type ToastProps = {
 };
 
 export function Toast({ message, onDismiss }: ToastProps) {
-  const reward = useMemo(() => parseReward(message), [message]);
+  const scoreChange = useMemo(() => parseScoreChange(message), [message]);
 
   useEffect(() => {
     if (!message) return;
@@ -17,14 +17,23 @@ export function Toast({ message, onDismiss }: ToastProps) {
   if (!message) return null;
 
   return (
-    <div className={`toast${reward ? " toast-reward" : ""}`} role="status" aria-live="polite">
-      {reward ? (
+    <div
+      className={`toast${scoreChange ? ` toast-score ${scoreChange.tone}` : ""}`}
+      role="status"
+      aria-live="polite"
+    >
+      {scoreChange ? (
         <>
-          <span className="toast-reward-badge">+{reward.amount}</span>
+          <span className="toast-score-badge">
+            {scoreChange.amount > 0 ? "+" : ""}
+            {scoreChange.amount}
+          </span>
           <span className="toast-copy">
-            <strong>Koko score increased</strong>
-            <span>{reward.metric}</span>
-            <small>{message.replace(`Pet ${reward.metric} +${reward.amount}`, "").trim()}</small>
+            <strong>
+              Koko score {scoreChange.amount > 0 ? "increased" : "decreased"}
+            </strong>
+            <span>{scoreChange.metric}</span>
+            <small>{scoreChange.remainingMessage}</small>
           </span>
         </>
       ) : (
@@ -37,9 +46,17 @@ export function Toast({ message, onDismiss }: ToastProps) {
   );
 }
 
-function parseReward(message?: string): { metric: string; amount: number } | undefined {
+function parseScoreChange(
+  message?: string,
+): { metric: string; amount: number; tone: "positive" | "negative"; remainingMessage: string } | undefined {
   if (!message) return undefined;
-  const match = message.match(/Pet (health|mood|energy|trust) \+(\d+)/i);
+  const match = message.match(/Pet (health|mood|energy|trust) ([+-]\d+)/i);
   if (!match) return undefined;
-  return { metric: match[1], amount: Number(match[2]) };
+  const amount = Number(match[2]);
+  return {
+    metric: match[1],
+    amount,
+    tone: amount >= 0 ? "positive" : "negative",
+    remainingMessage: message.replace(match[0], "").trim(),
+  };
 }

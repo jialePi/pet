@@ -92,7 +92,7 @@ function App() {
         {view === "add" && (
           <AddItems
             items={availableItems}
-            onAdd={(draft) => addManualItem(draft, today)}
+            onAdd={addManualItem}
             onNavigate={setView}
             onRecordPurchaseDecision={(input) => recordPurchaseDecision(input, today)}
             userAiSettings={userAiSettings}

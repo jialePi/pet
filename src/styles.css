@@ -149,6 +149,12 @@ main {
   align-items: start;
 }
 
+.dashboard-grid.calm-dashboard {
+  grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1.1fr);
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
 .waste-brief {
   grid-column: 1 / -1;
   display: grid;
@@ -824,6 +830,17 @@ progress {
   background: white;
 }
 
+.subsection-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  margin: 1.15rem 0 0.55rem;
+}
+
+.subsection-heading h2 {
+  margin: 0.2rem 0 0;
+}
+
 .shopping-results {
   grid-column: 1 / -1;
   display: grid;
@@ -1252,6 +1269,31 @@ progress {
   border-radius: 8px;
 }
 
+.calm-empty-state {
+  min-height: 280px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 1rem;
+  background: #fbfef9;
+}
+
+.calm-empty-state h2 {
+  margin: 0.25rem 0;
+}
+
+.calm-empty-state p {
+  max-width: 520px;
+  margin: 0;
+}
+
+.empty-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
 .empty-state svg {
   color: #2f7d55;
 }
@@ -1280,13 +1322,21 @@ progress {
   border-color: rgba(255, 255, 255, 0.25);
 }
 
-.toast-reward {
+.toast-score {
   min-width: min(360px, calc(100vw - 2rem));
+}
+
+.toast-score.positive {
   border: 1px solid rgba(167, 239, 187, 0.5);
   background: linear-gradient(135deg, #4f9f6d, #74bd88);
 }
 
-.toast-reward-badge {
+.toast-score.negative {
+  border: 1px solid rgba(255, 190, 170, 0.55);
+  background: linear-gradient(135deg, #8f3f2b, #d86c4d);
+}
+
+.toast-score-badge {
   display: grid;
   place-items: center;
   width: 46px;
@@ -1298,6 +1348,11 @@ progress {
   font-weight: 900;
   font-size: 1.05rem;
   animation: score-pop 420ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.toast-score.negative .toast-score-badge {
+  background: #ffe0d4;
+  color: #7a2c1e;
 }
 
 .toast-copy {

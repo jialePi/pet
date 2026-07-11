@@ -111,6 +111,7 @@ Then spinach appears before rice
 - AI daily plan 基于当前 Today missions 和 active items 生成。
 - recipe steps 必须逐步完成后才能提交 usage task。
 - 提交 usage task 后库存数量减少；数量为 0 时 item 变成 `used`。
+- 如果 usage task 消耗剩余全部数量，记录 `used` action；否则记录 `partially_used` action。
 - 如果 Today mission 先把同一个 item 标记为 `frozen`、`used`、`shared` 或 `discarded`，AI daily plan 中引用该 item 的 task 必须自动移除。
 - stale task 移除后 UI 必须显示已同步提示，不允许保留卡住的 submit 按钮。
 
@@ -150,7 +151,7 @@ Then the app calls recognition
 And shows candidates or a recoverable API-key error
 ```
 
-### 购买防护到库存
+### 购物清单检查到库存
 
 ```text
 Given inventory already contains bananas

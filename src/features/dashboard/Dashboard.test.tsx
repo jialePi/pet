@@ -172,7 +172,7 @@ describe("Dashboard pet interactions", () => {
 
     await user.click(
       within(screen.getByLabelText("Pet interaction choices")).getByRole("button", {
-        name: "Shopping check",
+        name: "Before shopping",
       }),
     );
 
@@ -198,6 +198,24 @@ describe("Dashboard pet interactions", () => {
       screen.getByText("The pet is pointing at today's most waste-risky food."),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Mood check" })).not.toBeInTheDocument();
+  });
+
+  it("shows use-by-today count from item dates, not all today missions", () => {
+    render(
+      <Dashboard
+        items={[item]}
+        availableItems={[item]}
+        missions={[mission]}
+        pet={pet}
+        today="2026-07-10"
+        onRecordAction={vi.fn()}
+        onNavigate={vi.fn()}
+        onResetDemo={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Use by today")).toBeInTheDocument();
+    expect(screen.getByText("Use by today").nextElementSibling).toHaveTextContent("0");
   });
 
   it("shows a local rescue plan when remote AI is unavailable", async () => {
@@ -278,8 +296,13 @@ describe("Dashboard pet interactions", () => {
       />,
     );
 
-    expect(screen.getByText("No urgent rescue right now")).toBeInTheDocument();
-    expect(screen.getByText(/1 frozen item is parked in inventory/)).toBeInTheDocument();
+    expect(screen.getByText("Next step")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Before you shop" })).toBeInTheDocument();
+    expect(screen.getByText("Check your list before buying")).toBeInTheDocument();
+    expect(screen.getByText(/1 frozen item is parked safely/)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Waste prevention brief")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Kitchen snapshot")).not.toBeInTheDocument();
+    expect(screen.queryByText("today")).not.toBeInTheDocument();
   });
 
   it("syncs an AI daily plan when a mission action freezes the planned item", async () => {

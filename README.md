@@ -7,7 +7,7 @@ This is not a perfect fridge inventory tracker. It is a food-waste prevention as
 ## Features
 
 - First-screen waste brief: today risk count, likely items saved, and best next action.
-- Shopping Check as the core entry point before buying more food.
+- Check & Add flow with a shopping-list check before buying more food.
 - Virtual pet dashboard with mood, health, energy, and trust.
 - Inventory with active, frozen, used, shared, and discarded states.
 - Today rescue decisions generated from item risk and suggested use dates.
@@ -27,7 +27,7 @@ Pitch the app as a decision interceptor, not as a perfect tracker:
 Suggested demo flow:
 
 1. Start on the Dashboard and show `Today waste risks`, `Potential waste avoided`, and `Best action`.
-2. Open Shopping Check and enter `spinach, milk, ice cream`.
+2. Open Check & Add, paste `spinach, milk, ice cream`, and run `Check list`.
 3. The pet blocks spinach because it already exists and is urgent.
 4. Choose the default `Skip purchase` or `Reduce quantity` action.
 5. Show Impact: duplicate buy avoided and estimated waste avoided increase.
@@ -116,7 +116,7 @@ npm run deploy
 ```
 
 The public deployment uses a bring-your-own-key flow. Each user selects Google AI
-or OpenAI in **AI Settings** and enters their own key. The key is kept in browser
+or OpenAI in **AI** and enters their own key. The key is kept in browser
 session storage, sent only on AI requests, and forwarded by the Worker without
 being stored or returned. Model names remain non-secret Worker variables in
 `wrangler.jsonc`.

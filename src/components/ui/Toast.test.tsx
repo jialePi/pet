@@ -24,4 +24,15 @@ describe("Toast reward feedback", () => {
     expect(onDismiss).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
   });
+
+  it("shows a pet score decrease", () => {
+    const onDismiss = vi.fn();
+
+    render(<Toast message="Bananas discarded. Pet mood -12" onDismiss={onDismiss} />);
+
+    expect(screen.getByText("Koko score decreased")).toBeInTheDocument();
+    expect(screen.getByText("mood")).toBeInTheDocument();
+    expect(screen.getByText("-12")).toBeInTheDocument();
+    expect(screen.getByText("Bananas discarded.")).toBeInTheDocument();
+  });
 });

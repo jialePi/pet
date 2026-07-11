@@ -86,6 +86,17 @@ describe("planning", () => {
     expect(plan.today).toHaveLength(0);
   });
 
+  it("keeps stable items out of today's rescue decisions", () => {
+    const stablePlan = generatePlan({
+      items: [baseItem],
+      actions: [],
+      today: "2026-07-10",
+    });
+
+    expect(stablePlan.today).toHaveLength(0);
+    expect(stablePlan.week[0].itemId).toBe(baseItem.id);
+  });
+
   it("keeps checked items in the plan and moves them to a follow-up action", () => {
     const chicken: InventoryItem = {
       ...baseItem,
@@ -148,6 +159,25 @@ describe("planning", () => {
 
     expect(beforeCheck.today[0].suggestedAction).toBe("check_quality");
     expect(afterCheck.today[0].suggestedAction).toBe("freeze");
+  });
+
+  it("does not treat date corrections as skipped rescue actions", () => {
+    const plan = generatePlan({
+      items: [baseItem],
+      actions: [
+        {
+          id: "action-date",
+          itemId: baseItem.id,
+          type: "date_adjusted",
+          quantity: 1,
+          unit: "item",
+          occurredAt: "2026-07-10T10:00:00.000Z",
+        },
+      ],
+      today: "2026-07-10",
+    });
+
+    expect(plan.week[0].reasonCodes).not.toContain("CHECKED_TODAY");
   });
 
   it("does not offer follow-up missions after a terminal rescue action", () => {

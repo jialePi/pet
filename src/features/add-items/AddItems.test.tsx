@@ -40,7 +40,7 @@ describe("AddItems", () => {
     );
 
     await user.type(screen.getByLabelText("Name"), "Bananas");
-    await user.click(screen.getByRole("button", { name: "Add checked item" }));
+    await user.click(screen.getByRole("button", { name: "Add food" }));
 
     expect(screen.getByRole("alert")).toHaveTextContent("This could become waste");
     expect(screen.getByRole("alert")).toHaveTextContent("We already have");
@@ -64,8 +64,8 @@ describe("AddItems", () => {
     );
 
     await user.type(screen.getByLabelText("Name"), "Bananas");
-    await user.click(screen.getByRole("button", { name: "Add checked item" }));
-    await user.click(screen.getByRole("button", { name: "Buy anyway override" }));
+    await user.click(screen.getByRole("button", { name: "Add food" }));
+    await user.click(screen.getByRole("button", { name: "Buy anyway" }));
 
     expect(onAdd).toHaveBeenCalledWith(
       expect.objectContaining({ name: "Bananas" }),

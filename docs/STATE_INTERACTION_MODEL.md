@@ -75,9 +75,10 @@ Presentation invariants:
 
 | User action | Inventory update | FoodAction update | Mission update | Pet update |
 | --- | --- | --- | --- | --- |
-| Confirm recognized item | Add `active` item. | None. | New missions may appear. | Trust improves slightly. |
+| Confirm recognized item | Add `active` item. | None. | New missions may appear. | No score change; planning starts. |
 | Check quality/date | Keep item `active`. | Add `checked`. | Keep mission open and regenerate as a follow-up decision. | Trust improves; no rescue streak. |
-| Submit AI usage task | Decrease quantity; if zero, set `used`; otherwise remain `active`. | Add `partially_used`. | Task disappears after submission. | Positive rescue effect. |
+| Submit AI usage task | Decrease quantity; if zero, set `used`; otherwise remain `active`. | Add `used` when the remainder is consumed; otherwise add `partially_used`. | Task disappears after submission. | Positive rescue effect. |
+| Edit date or quantity | Keep item status unchanged. | Add `date_adjusted` and/or `quantity_adjusted` if values changed. | Recalculate missions from corrected data. | Trust improves; no rescue streak. |
 | Mark Used | Set `used`. | Add `used`. | Remove from missions. | Positive rescue effect. |
 | Mark Frozen | Set `frozen`, set storage to `freezer`, keep quantity. | Add `frozen`. | Remove from urgent missions. | Energy/trust effect. |
 | Mark Shared | Set `shared`. | Add `shared`. | Remove from missions. | Mood/trust effect. |

@@ -69,6 +69,8 @@ describe("Inventory", () => {
 
     const visibleItems = screen.getAllByRole("article");
     expect(within(visibleItems[0]).getByText("Spinach")).toBeInTheDocument();
+    expect(within(visibleItems[0]).getByText("use by today")).toBeInTheDocument();
+    expect(within(visibleItems[0]).queryByText("use today")).not.toBeInTheDocument();
     expect(screen.getByText("Rice")).toBeInTheDocument();
   });
 

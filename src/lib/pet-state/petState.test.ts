@@ -73,7 +73,11 @@ describe("pet state", () => {
   });
 
   it("records checked actions without consuming the item or completing the rescue streak", () => {
-    const start = initialPetState("2026-07-10T00:00:00.000Z");
+    const start = {
+      ...initialPetState("2026-07-10T00:00:00.000Z"),
+      streakDays: 2,
+      lastStreakDate: "2026-07-09",
+    };
     const next = calculatePetState({
       current: start,
       items: [urgentItem],
@@ -91,7 +95,8 @@ describe("pet state", () => {
     });
 
     expect(next.trust).toBeGreaterThan(start.trust);
-    expect(next.streakDays).toBe(0);
+    expect(next.streakDays).toBe(2);
+    expect(next.lastStreakDate).toBe("2026-07-09");
     expect(next.lastRiskPenaltyDate).toBeUndefined();
   });
 
