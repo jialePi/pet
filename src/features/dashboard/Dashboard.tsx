@@ -17,6 +17,7 @@ import type {
   IsoDate,
   MissionCard,
   PetState,
+  PetReaction,
 } from "../../types/domain";
 import type { View } from "../../app/types";
 import { remoteAiEnabled } from "../../app/demoConfig";
@@ -37,6 +38,7 @@ type DashboardProps = {
   availableItems: InventoryItem[];
   missions: MissionCard[];
   pet: PetState;
+  petReaction?: PetReaction;
   today: IsoDate;
   onRecordAction: (
     item: InventoryItem,
@@ -54,6 +56,7 @@ export function Dashboard({
   availableItems,
   missions,
   pet,
+  petReaction,
   today,
   onRecordAction,
   onNavigate,
@@ -259,6 +262,7 @@ export function Dashboard({
             <KokoPet
               visualState={displayVisualState}
               energy={pet.energy}
+              reaction={petReaction}
               onInteract={() => setPetLine(getPetMessage("mission", petContext))}
             />
             <span className="pet-shadow" />

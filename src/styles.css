@@ -394,6 +394,10 @@ main {
   animation-name: koko-bored;
 }
 
+.koko-pet-review .koko-sprite {
+  animation-name: koko-bored;
+}
+
 .koko-pet-waiting .koko-sprite {
   animation-name: koko-waiting;
 }

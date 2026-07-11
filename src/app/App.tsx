@@ -32,6 +32,7 @@ function App() {
     actions,
     purchaseDecisions,
     pet,
+    petReaction,
     lastToast,
     addManualItem,
     updateInventoryItem,
@@ -78,6 +79,7 @@ function App() {
             availableItems={availableItems}
             missions={missions}
             pet={pet}
+            petReaction={petReaction}
             today={today}
             onRecordAction={(item, type, quantity, note) =>
               recordAction(item, type, quantity, note, today)

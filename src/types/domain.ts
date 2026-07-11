@@ -221,6 +221,15 @@ export type PetState = {
   lastRiskPenaltyDate?: IsoDate;
 };
 
+export type PetReactionMode = "wave" | "jump" | "review" | "sad" | "waiting" | "ill";
+
+export type PetReaction = {
+  id: string;
+  mode: PetReactionMode;
+  label: string;
+  durationMs?: number;
+};
+
 export type ImpactMetrics = {
   savedItemCount: number;
   discardedItemCount: number;

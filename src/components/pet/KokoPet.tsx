@@ -1,45 +1,45 @@
 import { useEffect, useState } from "react";
-import type { PetState } from "../../types/domain";
+import type { PetReaction, PetState } from "../../types/domain";
+import { getKokoMode, reactionToMode, type KokoMode } from "./kokoModes";
 
 type KokoPetProps = {
   visualState: PetState["visualState"];
   energy: number;
+  reaction?: PetReaction;
   onInteract?: () => void;
 };
-
-type KokoMode =
-  | "idle"
-  | "happy"
-  | "sad"
-  | "bored"
-  | "ill"
-  | "energetic"
-  | "waiting";
 
 const modeCopy: Record<KokoMode, string> = {
   idle: "Koko is calm",
   happy: "Koko is happy and waving",
   sad: "Koko is feeling sad",
   bored: "Koko is bored and thinking",
+  review: "Koko is checking the kitchen with you",
   ill: "Koko is feeling ill and needs care",
   energetic: "Koko is full of energy",
   waiting: "Koko is waiting for a food rescue",
 };
 
-function getMode(visualState: PetState["visualState"], energy: number): KokoMode {
-  if (visualState === "sick") return "ill";
-  if (visualState === "sad") return "sad";
-  if (visualState === "tired") return "bored";
-  if (visualState === "hungry") return "waiting";
-  if (visualState === "happy" && energy >= 82) return "energetic";
-  if (visualState === "happy") return "happy";
-  return "idle";
-}
-
-export function KokoPet({ visualState, energy, onInteract }: KokoPetProps) {
+export function KokoPet({ visualState, energy, reaction, onInteract }: KokoPetProps) {
   const [isInteracting, setIsInteracting] = useState(false);
-  const mode = getMode(visualState, energy);
-  const activeMode = isInteracting ? "happy" : mode;
+  const [activeReaction, setActiveReaction] = useState<PetReaction | undefined>();
+  const mode = getKokoMode(visualState, energy);
+
+  useEffect(() => {
+    if (!reaction) return;
+    setActiveReaction(reaction);
+    const timer = window.setTimeout(
+      () => setActiveReaction(undefined),
+      reaction.durationMs ?? 2200,
+    );
+    return () => window.clearTimeout(timer);
+  }, [reaction]);
+
+  const activeMode = isInteracting
+    ? "happy"
+    : activeReaction
+      ? reactionToMode(activeReaction.mode)
+      : mode;
 
   useEffect(() => {
     if (!isInteracting) return;
@@ -56,8 +56,11 @@ export function KokoPet({ visualState, energy, onInteract }: KokoPetProps) {
     <span
       className={`koko-pet koko-pet-${activeMode}`}
       role="img"
-      aria-label={modeCopy[activeMode]}
-      onClick={handleInteract}
+      aria-label={activeReaction?.label ?? modeCopy[activeMode]}
+      onClick={(event) => {
+        event.stopPropagation();
+        handleInteract();
+      }}
     >
       <span className="koko-sprite" aria-hidden="true" />
       <span className="koko-spark" aria-hidden="true" />

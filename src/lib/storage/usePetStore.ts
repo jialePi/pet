@@ -7,6 +7,7 @@ import type {
   InventoryItemDraft,
   IsoDate,
   PetState,
+  PetReaction,
   PurchaseDecisionEvent,
   PurchaseDecisionType,
 } from "../../types/domain";
@@ -19,12 +20,17 @@ import {
 } from "../pet-state/petState";
 import { todayIso } from "../dates/dates";
 import { applyInventoryAction } from "./inventoryUsage";
+import {
+  reactionIntentForAction,
+  reactionIntentForPurchaseDecision,
+} from "../pet-state/petReactions";
 
 type PetStore = {
   items: InventoryItem[];
   actions: FoodAction[];
   purchaseDecisions: PurchaseDecisionEvent[];
   pet: PetState;
+  petReaction: PetReaction;
   lastToast?: string;
   addManualItem: (draft: InventoryItemDraft, today?: IsoDate) => void;
   updateInventoryItem: (
@@ -83,6 +89,10 @@ function toInventoryItem(draft: InventoryItemDraft): InventoryItem {
   };
 }
 
+function createPetReaction(mode: PetReaction["mode"], label: string): PetReaction {
+  return { id: createId("reaction"), mode, label, durationMs: 2200 };
+}
+
 export const usePetStore = create<PetStore>()(
   persist(
     (set, get) => ({
@@ -90,6 +100,7 @@ export const usePetStore = create<PetStore>()(
       actions: demoActions,
       purchaseDecisions: [],
       pet: demoPet,
+      petReaction: createPetReaction("waiting", "Koko is ready to help with today's rescue."),
       addManualItem: (draft, today = todayIso()) => {
         const item = toInventoryItem(draft);
         const nextItems = [item, ...get().items];
@@ -101,6 +112,7 @@ export const usePetStore = create<PetStore>()(
             actions: get().actions,
             today,
           }),
+          petReaction: createPetReaction("wave", `${item.name} added. Koko is ready to plan it.`),
           lastToast: `${item.name} added. Pet trust +2`,
         });
       },
@@ -137,6 +149,7 @@ export const usePetStore = create<PetStore>()(
             actions: get().actions,
             today,
           }),
+          petReaction: createPetReaction("review", `${patch.name ?? item.name} updated. Koko is watching the change.`),
           lastToast: `${patch.name ?? item.name} updated.`,
         });
       },
@@ -175,10 +188,12 @@ export const usePetStore = create<PetStore>()(
                   : type === "checked"
                     ? `${item.name} checked. ${describeActionReward(type)}`
                     : `${item.name} recorded. We'll plan earlier next time.`;
+        const reaction = reactionIntentForAction(type, item.name);
         set({
           items: nextItems,
           actions: nextActions,
           pet: nextPet,
+          petReaction: createPetReaction(reaction.mode, reaction.label),
           lastToast: label,
         });
       },
@@ -205,9 +220,11 @@ export const usePetStore = create<PetStore>()(
                 : input.decision === "bought_anyway"
                   ? `${input.itemName} bought anyway. I will track the risk.`
                   : `${input.itemName} approved for planned shop.`;
+        const reaction = reactionIntentForPurchaseDecision(input.decision, input.itemName);
         set({
           purchaseDecisions: [decision, ...currentDecisions],
           pet: nextPet,
+          petReaction: createPetReaction(reaction.mode, reaction.label),
           lastToast: label,
         });
       },
@@ -227,6 +244,7 @@ export const usePetStore = create<PetStore>()(
           actions: demoActions,
           purchaseDecisions: [],
           pet: demoPet,
+          petReaction: createPetReaction("wave", "Demo pantry restored. Koko is ready."),
           lastToast: "Demo pantry restored.",
         }),
       clearAll: () =>
@@ -235,6 +253,7 @@ export const usePetStore = create<PetStore>()(
           actions: [],
           purchaseDecisions: [],
           pet: demoPet,
+          petReaction: createPetReaction("waiting", "The pantry is clear. Koko is waiting for a fresh start."),
           lastToast: "Local inventory cleared.",
         }),
       dismissToast: () => set({ lastToast: undefined }),
