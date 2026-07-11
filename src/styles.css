@@ -375,33 +375,8 @@ main {
   background-image: url("/pets/koko/spritesheet.webp");
   background-repeat: no-repeat;
   background-size: 1536px 2288px;
-  background-position: 0 0;
+  background-position: var(--koko-frame-x) var(--koko-frame-y);
   image-rendering: auto;
-}
-
-.koko-pet-happy .koko-sprite {
-  background-position: 0 -624px;
-}
-
-.koko-pet-sad .koko-sprite,
-.koko-pet-ill .koko-sprite {
-  background-position: 0 -1040px;
-}
-
-.koko-pet-bored .koko-sprite {
-  background-position: 0 -1664px;
-}
-
-.koko-pet-review .koko-sprite {
-  background-position: 0 -1664px;
-}
-
-.koko-pet-waiting .koko-sprite {
-  background-position: 0 -1248px;
-}
-
-.koko-pet-energetic .koko-sprite {
-  background-position: 0 -832px;
 }
 
 .koko-pet-reaction {

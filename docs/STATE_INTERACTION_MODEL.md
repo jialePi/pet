@@ -49,6 +49,30 @@ Frozen items do not create a hungry pet state by themselves. The pet can still m
 
 ## Synchronization Rules
 
+## Pet Presentation State
+
+`PetState.visualState` is the stable presentation baseline. It is derived from the
+pet metrics and unresolved active risk; it must not be used as a per-click event
+queue. A separate, transient `PetReaction` is created for a concrete user action.
+
+| Layer | Lifetime | Examples | Rendering rule |
+| --- | --- | --- | --- |
+| `visualState` | Until metrics/risk change | `calm`, `hungry`, `sad`, `sick` | One populated atlas cell, held steadily. |
+| `PetReaction` | One action, then expires | `used`, `frozen`, `checked`, `bought_anyway` | One different populated atlas cell plus a short outer nudge. |
+| Click interaction | One deliberate click | Ask for a clue, encourage, inspect | Show the current reaction copy and one short nudge. |
+
+Presentation invariants:
+
+- Never animate the background-position across an entire atlas row. Some source
+  rows contain transparent layout cells after the authored poses.
+- Every baseline and reaction pose must point to a validated non-empty cell.
+- A reaction must be keyed by a unique event id, so re-rendering or restoring a
+  persisted store does not replay an old reaction.
+- When a reaction expires, return to the current `visualState`; do not fall back
+  to a random or empty frame.
+- Stable state is allowed to look calm. Variety comes from distinct state and
+  reaction poses, not from an unbounded animation loop.
+
 | User action | Inventory update | FoodAction update | Mission update | Pet update |
 | --- | --- | --- | --- | --- |
 | Confirm recognized item | Add `active` item. | None. | New missions may appear. | Trust improves slightly. |

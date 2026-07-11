@@ -180,9 +180,17 @@ AI coach 输出：
 完成任务后：
 
 - 宠物状态立即更新。
-- 播放 1 秒以内轻量动画。
+- 播放一次 1 秒以内的轻量 reaction；默认状态保持稳定，不循环扫过图集。
 - 显示奖励 toast。
 - 任务移动到 completed 区域。
+
+Koko 图集适配约束：
+
+- 每个 `visualState` 使用一个稳定的、已确认非透明的静态帧。
+- `used`、`frozen`、`shared`、`checked`、`discarded` 和购买防护分别选择
+  不同的已确认帧；reaction 结束后回到当前基线状态。
+- 不使用整行 spritesheet 的连续 background-position 动画；图集的透明占位格
+  不得被渲染，否则宠物会间歇性消失。
 
 ### 拖动互动
 

@@ -1,6 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { PetReaction, PetState } from "../../types/domain";
-import { getKokoMode, reactionToMode, type KokoMode } from "./kokoModes";
+import {
+  getKokoFrame,
+  getKokoMode,
+  reactionToMode,
+  type KokoMode,
+} from "./kokoModes";
 
 type KokoPetProps = {
   visualState: PetState["visualState"];
@@ -49,6 +54,11 @@ export function KokoPet({ visualState, energy, reaction, onInteract }: KokoPetPr
       ? reactionToMode(activeReaction.mode)
       : mode;
   const isPlayingReaction = Boolean(isInteracting || activeReaction);
+  const frame = getKokoFrame(activeMode, isPlayingReaction);
+  const spriteStyle = {
+    "--koko-frame-x": `${frame.column * -192}px`,
+    "--koko-frame-y": `${frame.row * -208}px`,
+  } as CSSProperties;
 
   useEffect(() => {
     if (!isInteracting) return;
@@ -71,7 +81,7 @@ export function KokoPet({ visualState, energy, reaction, onInteract }: KokoPetPr
         handleInteract();
       }}
     >
-      <span className="koko-sprite" aria-hidden="true" />
+      <span className="koko-sprite" style={spriteStyle} aria-hidden="true" />
       <span className="koko-spark" aria-hidden="true" />
     </span>
   );
