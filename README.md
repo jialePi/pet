@@ -13,6 +13,7 @@ Users can add food manually, from mock receipt/photo flows, or through AI image 
 - Purchase guard for duplicates and too much high-risk food.
 - Demo date controls for testing future planning.
 - Optional Google AI Studio / OpenAI-backed image recognition and rescue planning.
+- Static QR demo mode with mock recognition and rule-based rescue plan fallback.
 - Local-first storage for hackathon demo use.
 
 ## Run Locally
@@ -35,6 +36,10 @@ Use the `Show QR` button in the top bar to generate a QR code from the current b
 The QR code is generated in the browser. No QR service or server API is required. Each phone keeps its own local demo data, so judges do not affect each other's inventory or pet state.
 
 ## Optional AI Setup
+
+The stable QR demo does not require remote AI. By default, image upload uses mock recognition and the rescue plan uses local rule fallbacks.
+
+Remote AI is only for local experimentation unless a backend API is deployed.
 
 ```bash
 cp .env.example .env.local

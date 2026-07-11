@@ -18,6 +18,7 @@ import type {
   PetState,
 } from "../../types/domain";
 import type { View } from "../../app/types";
+import { remoteAiEnabled } from "../../app/demoConfig";
 import { Meter } from "../../components/ui/Meter";
 import type {
   AiDailyPlanError,
@@ -103,6 +104,14 @@ export function Dashboard({
   }, [activePlanItemsKey, activePlanItems]);
 
   async function askDailyPlan() {
+    if (!remoteAiEnabled) {
+      const fallback = createLocalDailyPlan(petContext);
+      setPetLine(fallback.petLine);
+      setCompletedRecipeSteps({});
+      setDailyPlan({ kind: "success", response: fallback });
+      return;
+    }
+
     setDailyPlan({ kind: "loading", message: "Building today's recipe and usage tasks..." });
     try {
       const response = await fetch("/api/daily-plan", {
