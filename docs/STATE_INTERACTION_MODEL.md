@@ -58,7 +58,7 @@ queue. A separate, transient `PetReaction` is created for a concrete user action
 | Layer | Lifetime | Examples | Rendering rule |
 | --- | --- | --- | --- |
 | `visualState` | Until metrics/risk change | `calm`, `hungry`, `sad`, `sick` | One populated atlas cell, held steadily. |
-| `PetReaction` | One action, then expires | `used`, `frozen`, `checked`, `bought_anyway` | One different populated atlas cell plus a short outer nudge. |
+| `PetReaction` | One action, then expires | `used`, `frozen`, `checked`, `bought_anyway` | One different populated atlas cell held steadily. |
 | Click interaction | One deliberate click | Ask for a clue, encourage, inspect | Show the current reaction copy and one short nudge. |
 
 Presentation invariants:
@@ -71,7 +71,7 @@ Presentation invariants:
 - When a reaction expires, return to the current `visualState`; do not fall back
   to a random or empty frame.
 - Stable state is allowed to look calm. Variety comes from distinct state and
-  reaction poses, not from an unbounded animation loop.
+  reaction poses, not from an unbounded animation loop or automatic jitter.
 
 | User action | Inventory update | FoodAction update | Mission update | Pet update |
 | --- | --- | --- | --- | --- |

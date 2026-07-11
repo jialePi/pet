@@ -82,7 +82,6 @@ export function KokoPet({ visualState, energy, reaction, onInteract }: KokoPetPr
       }}
     >
       <span className="koko-sprite" style={spriteStyle} aria-hidden="true" />
-      <span className="koko-spark" aria-hidden="true" />
     </span>
   );
 }
