@@ -34,6 +34,14 @@ const categoryRisk: Record<FoodCategory, number> = {
   other: 5,
 };
 
+const terminalActionTypes = new Set<FoodAction["type"]>([
+  "used",
+  "partially_used",
+  "frozen",
+  "shared",
+  "discarded",
+]);
+
 export function getRiskLevel(item: InventoryItem, today: string): RiskLevel {
   const dateConfidence = item.confidence.suggestedUseByDate ?? 0;
   if (!item.suggestedUseByDate || dateConfidence < 0.5) return "unknown";
@@ -65,6 +73,7 @@ export function calculatePriorityScore(
     (action) => action.itemId === item.id && action.type === "date_adjusted",
   ).length;
   const skipPenalty = Math.min(skipCount * 5, 15);
+  const checkedTodayBoost = wasCheckedToday(item.id, actions, today) ? 12 : 0;
   const dateConfidence = item.confidence.suggestedUseByDate ?? 0;
   const confidenceAdjustment =
     dateConfidence >= 0.8 ? 0 : dateConfidence >= 0.5 ? -4 : -8;
@@ -76,6 +85,7 @@ export function calculatePriorityScore(
     categoryRisk[item.category] +
     quantityPressure +
     skipPenalty +
+    checkedTodayBoost +
     confidenceAdjustment -
     actionFriction
   );
@@ -96,6 +106,7 @@ export function getReasonCodes(
   }
   if (item.quantity >= 5) codes.push("LARGE_QUANTITY");
   if (risk === "unknown") codes.push("UNKNOWN_DATE");
+  if (wasCheckedToday(item.id, actions, today)) codes.push("CHECKED_TODAY");
   if (actions.some((action) => action.itemId === item.id && action.type === "date_adjusted")) {
     codes.push("SKIPPED_BEFORE");
   }
@@ -105,11 +116,29 @@ export function getReasonCodes(
   return codes;
 }
 
-export function getSuggestedAction(item: InventoryItem, risk: RiskLevel): SuggestedAction {
-  if (risk === "unknown") return "add_date";
-  if (risk === "past_suggested_date") return "check_quality";
+export function getSuggestedAction(
+  item: InventoryItem,
+  risk: RiskLevel,
+  checkedToday = false,
+): SuggestedAction {
+  if ((risk === "unknown" || risk === "past_suggested_date") && !checkedToday) {
+    return risk === "unknown" ? "add_date" : "check_quality";
+  }
+  if (needsQualityCheckBeforeRescue(item, risk) && !checkedToday) {
+    return "check_quality";
+  }
   if (item.category === "meat" || item.category === "seafood") return "freeze";
   return "use_now";
+}
+
+function needsQualityCheckBeforeRescue(
+  item: InventoryItem,
+  risk: RiskLevel,
+): boolean {
+  return (
+    (risk === "use_today" || risk === "use_soon") &&
+    ["meat", "seafood", "prepared"].includes(item.category)
+  );
 }
 
 export function explainPlanItem(
@@ -119,6 +148,9 @@ export function explainPlanItem(
 ): string {
   const lowerName = item.name.toLowerCase();
   const verb = lowerName.endsWith("s") && !lowerName.endsWith("ss") ? "are" : "is";
+  if (reasonCodes.includes("CHECKED_TODAY")) {
+    return `${item.name} ${verb} checked. Choose a follow-up action now so the decision actually prevents waste.`;
+  }
   if (risk === "unknown") {
     return `${item.name} ${verb} missing a confident suggested use date.`;
   }
@@ -138,7 +170,11 @@ export function generatePlan(input: PlanningInput): PlanningOutput {
   const activeItems = input.items.filter((item) => item.status === "active");
   const completedToday = new Set(
     input.actions
-      .filter((action) => action.occurredAt.startsWith(input.today))
+      .filter(
+        (action) =>
+          action.occurredAt.startsWith(input.today) &&
+          terminalActionTypes.has(action.type),
+      )
       .map((action) => action.itemId),
   );
 
@@ -147,6 +183,7 @@ export function generatePlan(input: PlanningInput): PlanningOutput {
     .map((item): PlanItem => {
       const riskLevel = getRiskLevel(item, input.today);
       const reasonCodes = getReasonCodes(item, input.actions, input.today);
+      const checkedToday = reasonCodes.includes("CHECKED_TODAY");
       return {
         id: `plan-${item.id}`,
         itemId: item.id,
@@ -154,7 +191,7 @@ export function generatePlan(input: PlanningInput): PlanningOutput {
         riskLevel,
         reasonCodes,
         explanation: explainPlanItem(item, riskLevel, reasonCodes),
-        suggestedAction: getSuggestedAction(item, riskLevel),
+        suggestedAction: getSuggestedAction(item, riskLevel, checkedToday),
         plannedFor: input.today,
         status: "open",
       };
@@ -166,4 +203,17 @@ export function generatePlan(input: PlanningInput): PlanningOutput {
     week: planItems.slice(0, 12),
     review: planItems.filter((item) => item.riskLevel === "unknown"),
   };
+}
+
+function wasCheckedToday(
+  itemId: string,
+  actions: FoodAction[],
+  today: string,
+): boolean {
+  return actions.some(
+    (action) =>
+      action.itemId === itemId &&
+      action.type === "checked" &&
+      action.occurredAt.startsWith(today),
+  );
 }

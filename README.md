@@ -2,19 +2,37 @@
 
 A hackathon MVP for reducing household food waste with a virtual pet.
 
-Users can add food manually, from mock receipt/photo flows, or through AI image recognition. The app creates inventory, blocks likely overbuying, plans daily food rescue tasks, and updates a pet based on whether food is used, frozen, shared, or discarded.
+This is not a perfect fridge inventory tracker. It is a food-waste prevention assistant that works at the two moments that matter most: before users overbuy, and before food gets forgotten. The app creates lightweight inventory, blocks likely overbuying, plans daily food rescue tasks, and updates a pet based on explainable waste-prevention actions.
 
 ## Features
 
+- First-screen waste brief: today risk count, likely items saved, and best next action.
+- Shopping Check as the core entry point before buying more food.
 - Virtual pet dashboard with mood, health, energy, and trust.
 - Inventory with active, frozen, used, shared, and discarded states.
-- Today missions generated from item risk and suggested use dates.
+- Today rescue decisions generated from item risk and suggested use dates.
 - AI daily plan with recipe steps and synchronized inventory tasks.
 - Purchase guard for duplicates and too much high-risk food.
 - Demo date controls for testing future planning.
 - Optional Google AI Studio / OpenAI-backed image recognition and rescue planning.
 - Static QR demo mode with mock recognition and rule-based rescue plan fallback.
 - Local-first storage for hackathon demo use.
+
+## Demo Story
+
+Pitch the app as a decision interceptor, not as a perfect tracker:
+
+> The app does not need to know every bite. It catches the few decisions where food waste is most likely to happen: buying a duplicate, ignoring a use-today item, or missing a simple freeze/share/use action.
+
+Suggested demo flow:
+
+1. Start on the Dashboard and show `Today waste risks`, `Potential waste avoided`, and `Best action`.
+2. Open Shopping Check and enter `spinach, milk, ice cream`.
+3. The pet blocks spinach because it already exists and is urgent.
+4. Choose the default `Skip purchase` or `Reduce quantity` action.
+5. Show Impact: duplicate buy avoided and estimated waste avoided increase.
+6. Return to Dashboard and show the two-step flow: `Check chicken` first if quality/date is uncertain, then `Freeze after check` or `Used some`.
+7. Show the pet reaction and Impact story explaining which waste was prevented. Checking builds trust, but only use/freeze/share/reduced purchase counts as rescued waste.
 
 ## Run Locally
 
@@ -68,7 +86,7 @@ npm run build
 
 The production deployment serves the React build and the three `/api/*` AI routes
 from one Cloudflare Worker. Static assets are configured in `wrangler.jsonc`, while
-`worker/index.ts` handles recognition, coaching, and daily planning.
+`worker/index.ts` handles recognition and daily rescue planning.
 `GET /api/health` reports whether the Worker is running in bring-your-own-key
 mode and whether an optional operator AI secret is configured, without exposing
 any secret.

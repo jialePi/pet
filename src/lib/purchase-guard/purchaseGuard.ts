@@ -5,6 +5,7 @@ import type {
   PurchaseGuardResult,
   QuantityUnit,
 } from "../../types/domain";
+import { getRiskLevel } from "../planning/planning";
 
 const highRiskCategories = new Set<FoodCategory>([
   "produce",
@@ -103,17 +104,24 @@ export function reviewShoppingPlan(input: {
     );
 
     if (guard.blocked && guard.reasonCode === "DUPLICATE_ACTIVE_ITEM") {
+      const urgentDuplicate = duplicateItems.find((item) =>
+        ["past_suggested_date", "use_today"].includes(getRiskLevel(item, input.today)),
+      );
       return {
         id: `shopping-${index}-${normalizeName(draft.name)}`,
         draft,
         decision: draft.quantity > 1 ? "reduce" : "skip",
         existingItemIds: guard.existingItemIds,
-        message: guard.message,
-        petLine: `Pause on ${draft.name}. We already have it, so this is the easiest waste to prevent.`,
+        message: urgentDuplicate
+          ? `Pause. You already have ${urgentDuplicate.name} marked for use today. Skip this purchase or check the fridge first.`
+          : guard.message,
+        petLine: urgentDuplicate
+          ? `Pause on ${draft.name}. We already have ${urgentDuplicate.name} at the waste-risk moment.`
+          : `Pause on ${draft.name}. We already have it, so this is the easiest waste to prevent.`,
         nextStep:
           draft.quantity > 1
-            ? "Reduce the amount or check the fridge before buying."
-            : "Skip this for now or check the fridge first.",
+            ? "Default: reduce the amount. Override only if you know the existing food is not enough."
+            : "Default: skip this purchase. Override only if you checked and still need it.",
       };
     }
 
@@ -124,8 +132,8 @@ export function reviewShoppingPlan(input: {
         decision: "check",
         existingItemIds: guard.existingItemIds,
         message: guard.message,
-        petLine: `Let's check before buying more ${draft.category}.`,
-        nextStep: "Review the inventory and only buy what you will use soon.",
+        petLine: `Let's check before buying more ${draft.category}. This is where overbuying becomes waste.`,
+        nextStep: "Default: check inventory first, then buy only what you will use soon.",
       };
     }
 
@@ -138,8 +146,8 @@ export function reviewShoppingPlan(input: {
         message: `You may already have ${duplicateItems
           .map((item) => `${item.quantity} ${item.unit} ${item.name}`)
           .join(", ")}.`,
-        petLine: `I am not blocking ${draft.name}, but I would check it first.`,
-        nextStep: "Check whether the existing item is opened, almost gone, or still enough.",
+        petLine: `I am not blocking ${draft.name}, but a quick fridge check can prevent a duplicate buy.`,
+        nextStep: "Default: check whether the existing item is opened, almost gone, or still enough.",
       };
     }
 
@@ -151,7 +159,7 @@ export function reviewShoppingPlan(input: {
       message: `${draft.name} does not look like a duplicate against current inventory.`,
       petLine: `Looks okay if ${draft.name} fits today's plan.`,
       nextStep: highRiskCategories.has(draft.category)
-        ? "Buy only what you can use in the next few days."
+        ? "Default: buy only what you can use in the next few days."
         : "Add it if it is part of the planned shop.",
     };
   });

@@ -12,11 +12,28 @@ export function Impact({ impact, pet }: ImpactProps) {
       <div className="section-heading">
         <div>
           <span className="eyebrow">Impact</span>
-          <h1>Waste-less progress</h1>
+          <h1>Waste prevented</h1>
         </div>
       </div>
+      <section className="impact-story" aria-label="Waste prevention story">
+        <div>
+          <span className="eyebrow">What changed</span>
+          <strong>{impact.duplicatePurchaseAvoidedCount} duplicate purchases avoided</strong>
+          <p>These are shopping moments where the default path became skip, reduce, or check before buying.</p>
+        </div>
+        <div>
+          <span className="eyebrow">Food rescued</span>
+          <strong>{impact.savedItemCount + impact.frozenItemCount + impact.sharedItemCount} items diverted</strong>
+          <p>Food was used, frozen, or shared before it became a stronger waste risk.</p>
+        </div>
+        <div>
+          <span className="eyebrow">Overrides</span>
+          <strong>{impact.buyAnywayCount} buy-anyway choices</strong>
+          <p>Overrides are allowed, but tracked so the pet can react to repeated overbuying.</p>
+        </div>
+      </section>
       <div className="impact-grid">
-        <ImpactCard icon={<Leaf />} label="Items rescued" value={impact.savedItemCount} />
+        <ImpactCard icon={<Leaf />} label="Rescued instead of forgotten" value={impact.savedItemCount} />
         <ImpactCard
           icon={<ShieldCheck />}
           label="Duplicate buys avoided"
@@ -27,8 +44,8 @@ export function Impact({ impact, pet }: ImpactProps) {
           label="Shopping checks"
           value={impact.shoppingCheckCount}
         />
-        <ImpactCard icon={<IceCreamBowl />} label="Frozen for later" value={impact.frozenItemCount} />
-        <ImpactCard icon={<Heart />} label="Shared" value={impact.sharedItemCount} />
+        <ImpactCard icon={<IceCreamBowl />} label="Frozen before expiry risk" value={impact.frozenItemCount} />
+        <ImpactCard icon={<Heart />} label="Shared instead of wasted" value={impact.sharedItemCount} />
         <ImpactCard icon={<PawPrint />} label="Streak days" value={impact.streakDays} />
       </div>
       <p className="privacy-note">

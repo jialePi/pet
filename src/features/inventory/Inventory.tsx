@@ -251,10 +251,12 @@ export function Inventory({
                     <button onClick={() => startEditing(item)}>
                       <Pencil aria-hidden="true" /> Edit
                     </button>
-                    {item.status === "active" && (
+                    {(item.status === "active" || item.status === "frozen") && (
                       <div className="action-row">
                         <button onClick={() => onRecordAction(item, "used")}>Used</button>
-                        <button onClick={() => onRecordAction(item, "frozen")}>Frozen</button>
+                        {item.status === "active" && (
+                          <button onClick={() => onRecordAction(item, "frozen")}>Frozen</button>
+                        )}
                         <button onClick={() => onRecordAction(item, "shared")}>Shared</button>
                         <button onClick={() => onRecordAction(item, "discarded")}>
                           Discarded

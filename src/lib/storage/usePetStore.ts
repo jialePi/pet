@@ -5,12 +5,18 @@ import type {
   FoodActionType,
   InventoryItem,
   InventoryItemDraft,
+  IsoDate,
   PetState,
   PurchaseDecisionEvent,
   PurchaseDecisionType,
 } from "../../types/domain";
 import { demoActions, demoItems, demoPet } from "../../data/demoData";
-import { calculatePetState } from "../pet-state/petState";
+import {
+  applyPetEffect,
+  calculatePetState,
+  describeActionReward,
+  purchaseDecisionEffects,
+} from "../pet-state/petState";
 import { todayIso } from "../dates/dates";
 import { applyInventoryAction } from "./inventoryUsage";
 
@@ -20,22 +26,28 @@ type PetStore = {
   purchaseDecisions: PurchaseDecisionEvent[];
   pet: PetState;
   lastToast?: string;
-  addManualItem: (draft: InventoryItemDraft) => void;
+  addManualItem: (draft: InventoryItemDraft, today?: IsoDate) => void;
   updateInventoryItem: (
     item: InventoryItem,
     patch: Partial<InventoryItemDraft>,
+    today?: IsoDate,
   ) => void;
   recordAction: (
     item: InventoryItem,
     type: FoodActionType,
     quantity?: number,
     note?: string,
+    today?: IsoDate,
   ) => void;
-  recordPurchaseDecision: (input: {
-    itemName: string;
-    decision: PurchaseDecisionType;
-    reason: string;
-  }) => void;
+  recordPurchaseDecision: (
+    input: {
+      itemName: string;
+      decision: PurchaseDecisionType;
+      reason: string;
+    },
+    today?: IsoDate,
+  ) => void;
+  recalculatePet: (today?: IsoDate) => void;
   resetDemo: () => void;
   clearAll: () => void;
   dismissToast: () => void;
@@ -43,6 +55,12 @@ type PetStore = {
 
 function createId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
+}
+
+function actionOccurredAt(today: IsoDate): string {
+  const now = new Date();
+  const time = now.toISOString().slice(11);
+  return `${today}T${time}`;
 }
 
 function toInventoryItem(draft: InventoryItemDraft): InventoryItem {
@@ -72,7 +90,7 @@ export const usePetStore = create<PetStore>()(
       actions: demoActions,
       purchaseDecisions: [],
       pet: demoPet,
-      addManualItem: (draft) => {
+      addManualItem: (draft, today = todayIso()) => {
         const item = toInventoryItem(draft);
         const nextItems = [item, ...get().items];
         set({
@@ -81,12 +99,12 @@ export const usePetStore = create<PetStore>()(
             current: get().pet,
             items: nextItems,
             actions: get().actions,
-            today: todayIso(),
+            today,
           }),
           lastToast: `${item.name} added. Pet trust +2`,
         });
       },
-      updateInventoryItem: (item, patch) => {
+      updateInventoryItem: (item, patch, today = todayIso()) => {
         const now = new Date().toISOString();
         const nextItems = get().items.map((candidate) =>
           candidate.id === item.id
@@ -117,13 +135,12 @@ export const usePetStore = create<PetStore>()(
             current: get().pet,
             items: nextItems,
             actions: get().actions,
-            today: todayIso(),
+            today,
           }),
           lastToast: `${patch.name ?? item.name} updated.`,
         });
       },
-      recordAction: (item, type, quantity, note) => {
-        const now = new Date().toISOString();
+      recordAction: (item, type, quantity, note, today = todayIso()) => {
         const usage = applyInventoryAction(item, type, quantity);
         const action: FoodAction = {
           id: createId("action"),
@@ -131,7 +148,7 @@ export const usePetStore = create<PetStore>()(
           type,
           quantity: usage.actionQuantity,
           unit: item.unit,
-          occurredAt: now,
+          occurredAt: actionOccurredAt(today),
           note,
         };
         const nextItems = get().items.map((candidate) =>
@@ -142,20 +159,22 @@ export const usePetStore = create<PetStore>()(
           current: get().pet,
           items: nextItems,
           actions: nextActions,
-          today: todayIso(),
+          today,
         });
         const label =
           type === "partially_used"
             ? usage.item.status === "used"
-              ? `${item.name} finished. Pet health +6`
+              ? `${item.name} finished. ${describeActionReward("used")}`
               : `${item.name} check-in saved. I will keep it on the rescue list.`
             : type === "used"
-              ? `${item.name} rescued. Pet health +6`
+              ? `${item.name} rescued. ${describeActionReward(type)}`
               : type === "frozen"
-              ? `${item.name} frozen. Pet energy +8`
-              : type === "shared"
-                ? `${item.name} shared. Pet mood +10`
-                : `${item.name} recorded. We'll plan earlier next time.`;
+                ? `${item.name} frozen. ${describeActionReward(type)}`
+                : type === "shared"
+                  ? `${item.name} shared. ${describeActionReward(type)}`
+                  : type === "checked"
+                    ? `${item.name} checked. ${describeActionReward(type)}`
+                    : `${item.name} recorded. We'll plan earlier next time.`;
         set({
           items: nextItems,
           actions: nextActions,
@@ -163,28 +182,43 @@ export const usePetStore = create<PetStore>()(
           lastToast: label,
         });
       },
-      recordPurchaseDecision: (input) => {
+      recordPurchaseDecision: (input, today = todayIso()) => {
         const decision: PurchaseDecisionEvent = {
           id: createId("purchase"),
           itemName: input.itemName,
           decision: input.decision,
           reason: input.reason,
-          occurredAt: new Date().toISOString(),
+          occurredAt: actionOccurredAt(today),
         };
         const currentDecisions = get().purchaseDecisions ?? [];
+        const nextPet = applyPetEffect(
+          get().pet,
+          purchaseDecisionEffects[input.decision],
+        );
         const label =
           input.decision === "skipped_duplicate"
-            ? `${input.itemName} skipped. Duplicate purchase avoided.`
+            ? `${input.itemName} skipped. Duplicate purchase avoided. Pet trust +6`
             : input.decision === "reduced_quantity"
-              ? `${input.itemName} reduced. Pet trust +2`
+              ? `${input.itemName} reduced. Pet trust +5`
               : input.decision === "checked_inventory"
-                ? `${input.itemName} flagged for fridge check.`
+                ? `${input.itemName} flagged for fridge check. Pet trust +3`
                 : input.decision === "bought_anyway"
                   ? `${input.itemName} bought anyway. I will track the risk.`
                   : `${input.itemName} approved for planned shop.`;
         set({
           purchaseDecisions: [decision, ...currentDecisions],
+          pet: nextPet,
           lastToast: label,
+        });
+      },
+      recalculatePet: (today = todayIso()) => {
+        set({
+          pet: calculatePetState({
+            current: get().pet,
+            items: get().items,
+            actions: get().actions,
+            today,
+          }),
         });
       },
       resetDemo: () =>

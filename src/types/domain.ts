@@ -61,6 +61,7 @@ export type FoodActionType =
   | "frozen"
   | "shared"
   | "discarded"
+  | "checked"
   | "date_adjusted"
   | "quantity_adjusted";
 
@@ -166,6 +167,7 @@ export type PlanReasonCode =
   | "LARGE_QUANTITY"
   | "SKIPPED_BEFORE"
   | "UNKNOWN_DATE"
+  | "CHECKED_TODAY"
   | "EASY_ACTION";
 
 export type SuggestedAction =
@@ -191,6 +193,7 @@ export type MissionCard = {
   id: string;
   planItemId: string;
   itemId: string;
+  phaseLabel: string;
   title: string;
   itemName: string;
   reason: string;
@@ -198,7 +201,9 @@ export type MissionCard = {
   rewardPreview: string;
   urgencyLabel: "Today" | "Soon" | "Review" | "Stable";
   primaryActionLabel: string;
+  primaryActionType: FoodActionType;
   secondaryActionLabel?: string;
+  secondaryActionType?: FoodActionType;
 };
 
 export type PetState = {
@@ -211,6 +216,9 @@ export type PetState = {
   stage: "egg" | "baby" | "grown";
   visualState: "happy" | "calm" | "hungry" | "tired" | "sad" | "sick";
   lastUpdatedAt: IsoDateTime;
+  lastScoredActionIds?: string[];
+  lastStreakDate?: IsoDate;
+  lastRiskPenaltyDate?: IsoDate;
 };
 
 export type ImpactMetrics = {

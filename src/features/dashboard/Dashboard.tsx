@@ -7,6 +7,7 @@ import {
   PawPrint,
   Play,
   RotateCcw,
+  ShieldCheck,
   ShoppingBasket,
   Sparkles,
 } from "lucide-react";
@@ -19,7 +20,6 @@ import type {
 } from "../../types/domain";
 import type { View } from "../../app/types";
 import { remoteAiEnabled } from "../../app/demoConfig";
-import { Meter } from "../../components/ui/Meter";
 import type {
   AiDailyPlanError,
   AiDailyPlanResponse,
@@ -87,7 +87,13 @@ export function Dashboard({
   );
   const useToday = missions.filter((mission) => mission.urgencyLabel === "Today").length;
   const thisWeek = missions.filter((mission) => mission.urgencyLabel !== "Stable").length;
+  const wasteBrief = createWasteBrief(missions);
   const petContext = { availableItems, activePlanItems, frozenItems, missions, pet };
+  const hasUrgentMissions = useToday > 0;
+  const displayVisualState = getDisplayVisualState(
+    pet.visualState,
+    hasUrgentMissions,
+  );
 
   useEffect(() => {
     setDailyPlan((current) => {
@@ -201,7 +207,13 @@ export function Dashboard({
   function completeUsageTask(task: AiUsageTask) {
     const item = activePlanItems.find((candidate) => candidate.id === task.itemId);
     if (!item) return;
-    onRecordAction(item, "partially_used", task.quantity, task.note);
+    const actionType = task.quantity >= item.quantity ? "used" : "partially_used";
+    onRecordAction(
+      item,
+      actionType,
+      actionType === "partially_used" ? task.quantity : undefined,
+      task.note,
+    );
     setDailyPlan((current) => {
       if (current.kind !== "success" && current.kind !== "error") return current;
       const response = current.kind === "success" ? current.response : current.fallback;
@@ -217,7 +229,22 @@ export function Dashboard({
 
   return (
     <section className="dashboard-grid">
-      <section className={`pet-room ${pet.visualState}`} aria-label="Pet room">
+      <section className="waste-brief" aria-label="Waste prevention brief">
+        <div>
+          <span className="eyebrow">Waste decision brief</span>
+          <h1>Today: {wasteBrief.riskCount} waste risks</h1>
+          <p>{wasteBrief.summary}</p>
+        </div>
+        <div className="waste-brief-metrics">
+          <WasteBriefMetric label="Potential waste avoided" value={wasteBrief.itemsLabel} />
+          <WasteBriefMetric label="Best action" value={wasteBrief.bestAction} />
+        </div>
+        <button className="primary" onClick={() => onNavigate("add")}>
+          <ShoppingBasket aria-hidden="true" /> Run shopping check
+        </button>
+      </section>
+
+      <section className={`pet-room ${displayVisualState}`} aria-label="Pet room">
         <div className="room-scene">
           <div className="fridge">
             <span>today</span>
@@ -228,7 +255,7 @@ export function Dashboard({
             onClick={() => setPetLine(getPetMessage("mission", petContext))}
             aria-label="Ask pet for current reminder"
           >
-            <span className="pet-face">•ᴗ•</span>
+            <span className="pet-face">{getPetFace(displayVisualState)}</span>
             <span className="pet-shadow" />
           </button>
         </div>
@@ -269,20 +296,19 @@ export function Dashboard({
               )}
             </section>
           )}
-          <div className="meters">
-            <Meter label="Health" value={pet.health} />
-            <Meter label="Mood" value={pet.mood} />
-            <Meter label="Energy" value={pet.energy} />
-            <Meter label="Trust" value={pet.trust} />
-          </div>
+          <PetStatusPanel
+            pet={pet}
+            hasUrgentMissions={hasUrgentMissions}
+            visualState={displayVisualState}
+          />
         </div>
       </section>
 
       <section className="mission-panel" aria-labelledby="missions-title">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">Pet request</span>
-            <h1 id="missions-title">Today's missions</h1>
+            <span className="eyebrow">Waste blockers</span>
+            <h1 id="missions-title">Today's rescue decisions</h1>
           </div>
           <button className="icon-button" onClick={onResetDemo} title="Reload demo pantry">
             <RotateCcw aria-hidden="true" />
@@ -313,8 +339,8 @@ export function Dashboard({
         )}
       </section>
 
-      <aside className="pulse-panel" aria-label="Inventory pulse">
-        <span className="eyebrow">Inventory pulse</span>
+      <aside className="pulse-panel" aria-label="Waste blocker pulse">
+        <span className="eyebrow">Waste blocker pulse</span>
         <div className="pulse-stat">
           <strong>{availableItems.length}</strong>
           <span>available items</span>
@@ -328,10 +354,56 @@ export function Dashboard({
           <strong>{thisWeek}</strong>
         </div>
         <button className="primary wide" onClick={() => onNavigate("add")}>
-          <PackagePlus aria-hidden="true" /> Add food
+          <ShieldCheck aria-hidden="true" /> Shopping check
+        </button>
+        <button className="wide" onClick={() => onNavigate("inventory")}>
+          <PackagePlus aria-hidden="true" /> Review food
         </button>
       </aside>
     </section>
+  );
+}
+
+function createWasteBrief(missions: MissionCard[]): {
+  riskCount: number;
+  itemsLabel: string;
+  bestAction: string;
+  summary: string;
+} {
+  const priorityMissions = missions.filter((mission) =>
+    ["Today", "Soon"].includes(mission.urgencyLabel),
+  );
+  const todayMissions = priorityMissions.filter(
+    (mission) => mission.urgencyLabel === "Today",
+  );
+  const riskMissions = todayMissions.length > 0 ? todayMissions : priorityMissions;
+  const savedNames = riskMissions.slice(0, 2).map((mission) => mission.itemName);
+  const [firstMission] = riskMissions;
+
+  if (!firstMission) {
+    return {
+      riskCount: 0,
+      itemsLabel: "None urgent",
+      bestAction: "Check before buying",
+      summary:
+        "No urgent rescue is waiting. The highest-value waste prevention move is checking the shopping list before buying more.",
+    };
+  }
+
+  return {
+    riskCount: riskMissions.length,
+    itemsLabel: savedNames.join(" + "),
+    bestAction: `${firstMission.primaryActionLabel} ${firstMission.itemName}`,
+    summary: `${firstMission.itemName} is the clearest waste-risk item right now. Act on it before buying more food. ${firstMission.reason}`,
+  };
+}
+
+function WasteBriefMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="waste-brief-metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
 
@@ -381,6 +453,117 @@ function getPetMessage(kind: PetMessageKind, context: PetInteractionContext): st
     return "I am worried about forgotten food. Pick one easy item to save.";
   }
   return "I may need a careful fridge check. Use your senses and local food safety guidance.";
+}
+
+function PetStatusPanel({
+  pet,
+  hasUrgentMissions,
+  visualState,
+}: {
+  pet: PetState;
+  hasUrgentMissions: boolean;
+  visualState: PetState["visualState"];
+}) {
+  const average = Math.round((pet.health + pet.mood + pet.energy + pet.trust) / 4);
+  const reaction = getPetReaction(pet, hasUrgentMissions, visualState);
+
+  return (
+    <section className={`pet-status-panel ${visualState}`} aria-label="Pet status">
+      <div className="pet-status-main">
+        <span className="eyebrow">Pet status</span>
+        <strong>{reaction.title}</strong>
+        <p>{reaction.message}</p>
+      </div>
+      <div className="pet-status-score" aria-label={`Pet balance ${average} out of 100`}>
+        <strong>{average}</strong>
+        <span>balance</span>
+      </div>
+      <div className="pet-stat-chips" aria-label="Pet signals">
+        <PetStatChip label="Health" value={pet.health} />
+        <PetStatChip label="Mood" value={pet.mood} />
+        <PetStatChip label="Energy" value={pet.energy} />
+        <PetStatChip label="Trust" value={pet.trust} />
+      </div>
+    </section>
+  );
+}
+
+function PetStatChip({ label, value }: { label: string; value: number }) {
+  return (
+    <span className={`pet-stat-chip ${getStatTone(value)}`}>
+      {label}
+      <strong>{value}</strong>
+    </span>
+  );
+}
+
+function getPetReaction(
+  pet: PetState,
+  hasUrgentMissions: boolean,
+  visualState: PetState["visualState"],
+): { title: string; message: string } {
+  if (visualState === "sick") {
+    return {
+      title: "Needs care",
+      message: "Use, freeze, or share one risky item to help the pet recover.",
+    };
+  }
+  if (visualState === "sad") {
+    return {
+      title: "Worried",
+      message: "The pet reacts to forgotten food. One rescue action is enough.",
+    };
+  }
+  if (visualState === "tired") {
+    return {
+      title: "Low energy",
+      message: "A no-time fallback like freezing still counts as progress.",
+    };
+  }
+  if (hasUrgentMissions || visualState === "hungry") {
+    return {
+      title: "Asking for help",
+      message: "The pet is pointing at today's most waste-risky food.",
+    };
+  }
+  if (visualState === "happy") {
+    return {
+      title: "Happy",
+      message: "Good rescue habits are keeping the pet bright.",
+    };
+  }
+  return {
+    title: "Steady",
+    message: "Keep shopping checks small and rescue one item at a time.",
+  };
+}
+
+function getStatTone(value: number): "good" | "watch" | "low" {
+  if (value >= 70) return "good";
+  if (value >= 45) return "watch";
+  return "low";
+}
+
+function getDisplayVisualState(
+  visualState: PetState["visualState"],
+  hasUrgentMissions: boolean,
+): PetState["visualState"] {
+  if (
+    hasUrgentMissions &&
+    (visualState === "happy" || visualState === "calm")
+  ) {
+    return "hungry";
+  }
+  return visualState;
+}
+
+function getPetFace(visualState: PetState["visualState"]): string {
+  if (visualState === "happy") return "＾ᴗ＾";
+  if (visualState === "hungry") return "•﹏•";
+  if (visualState === "tired") return "－_－";
+  if (visualState === "sad") return "；︵；";
+  if (visualState === "sick") return "×︵×";
+  return "•ᴗ•";
 }
 
 function AiDailyPlanPanel({
@@ -570,25 +753,25 @@ export function MissionCardView({
     note?: string,
   ) => void;
 }) {
-  const primaryAction: FoodActionType =
-    mission.primaryActionLabel === "Frozen"
-      ? "frozen"
-      : mission.primaryActionLabel === "Used some"
-        ? "partially_used"
-        : "used";
-  const secondaryAction: FoodActionType =
-    mission.secondaryActionLabel === "No time: freeze" ? "frozen" : "partially_used";
+  const primaryAction = mission.primaryActionType;
+  const secondaryAction = mission.secondaryActionType;
   const partialQuantity = Math.min(1, item.quantity);
 
   return (
     <article className={`mission-card ${mission.urgencyLabel.toLowerCase()}`}>
       <div className="mission-topline">
-        <span className="risk-chip">{mission.urgencyLabel}</span>
+        <span className="risk-chip">{mission.phaseLabel}</span>
         <span>{mission.rewardPreview}</span>
       </div>
+      <span className="urgency-label">{mission.urgencyLabel}</span>
       <h2>{mission.title}</h2>
-      <p>{mission.reason}</p>
+      <p>
+        <strong>Waste reason:</strong> {mission.reason}
+      </p>
       <p className="suggestion">{mission.suggestedAction}</p>
+      <p className="mission-impact">
+        <strong>Impact:</strong> {getMissionImpact(mission)}
+      </p>
       <div className="action-row">
         <button
           className="primary"
@@ -599,7 +782,9 @@ export function MissionCardView({
               primaryAction === "partially_used" ? partialQuantity : undefined,
               primaryAction === "partially_used"
                 ? "Lightweight check-in: used some, not exact tracking."
-                : undefined,
+                : primaryAction === "checked"
+                  ? "Checked quality/date; inventory remains active."
+                  : undefined,
             )
           }
         >
@@ -610,7 +795,7 @@ export function MissionCardView({
             Finished
           </button>
         )}
-        {mission.secondaryActionLabel && (
+        {mission.secondaryActionLabel && secondaryAction && (
           <button
             onClick={() =>
               onRecordAction(
@@ -629,6 +814,16 @@ export function MissionCardView({
       </div>
     </article>
   );
+}
+
+function getMissionImpact(mission: MissionCard): string {
+  if (mission.primaryActionType === "frozen") {
+    return `Prevents ${mission.itemName} from becoming a waste risk if cooking is not realistic today.`;
+  }
+  if (mission.primaryActionType === "checked") {
+    return `Check does not finish the rescue. It unlocks the next use, freeze, share, or discard decision.`;
+  }
+  return `Uses down ${mission.itemName} before it becomes forgotten food.`;
 }
 
 function MissionEmptyState({

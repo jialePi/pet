@@ -193,6 +193,16 @@ export function AddItems({
     }
   }
 
+  function overrideGuardAdd() {
+    if (!guard) return;
+    onRecordPurchaseDecision({
+      itemName: guard.draft.name,
+      decision: "bought_anyway",
+      reason: guard.result.message,
+    });
+    guardedAdd(guard.draft, true);
+  }
+
   function loadCandidates(mode: "receipt" | "photo") {
     const candidates = mode === "receipt" ? mockReceiptCandidates : mockPhotoCandidates;
     setMockMode(mode);
@@ -295,18 +305,19 @@ export function AddItems({
     <section className="add-layout">
       <div className="section-heading">
         <div>
-          <span className="eyebrow">Add items</span>
-          <h1>Check before buying</h1>
+          <span className="eyebrow">Waste prevention entry</span>
+          <h1>Shopping Check first</h1>
         </div>
       </div>
 
       <section className="shopping-plan-panel" aria-labelledby="shopping-plan-title">
         <div className="shopping-plan-copy">
           <span className="eyebrow">Pet purchase guard</span>
-          <h2 id="shopping-plan-title">Shopping plan check</h2>
+          <h2 id="shopping-plan-title">Check the cart before buying</h2>
           <p>
-            Paste a planned shop before buying. The pet checks for duplicates and
-            high-risk overbuying without asking you to track every bite.
+            Paste a planned shop before buying. The pet looks for the decisions
+            most likely to create waste: duplicates, too much high-risk food, or
+            items that should be used before you shop again.
           </p>
         </div>
         <div className="shopping-plan-input">
@@ -324,7 +335,7 @@ export function AddItems({
             onClick={checkShoppingPlan}
             disabled={!shoppingPlanText.trim()}
           >
-            <ShoppingBasket aria-hidden="true" /> Ask pet before buying
+            <ShoppingBasket aria-hidden="true" /> Check for waste risks
           </button>
         </div>
         {shoppingPlanResults.length > 0 && (
@@ -389,17 +400,18 @@ export function AddItems({
           </div>
           <div>
             <span className="eyebrow">Pet purchase guard</span>
-            <h2>Let's pause before adding more</h2>
+            <h2>Pause. This could become waste.</h2>
             <p>{guard.result.message}</p>
             <p className="privacy-note">
-              This is a waste-risk nudge, not a hard block. You can still add it if you really need it.
+              Default path: use, freeze, share, reduce, or check what is already
+              there. Buying anyway is allowed, but recorded as an override.
             </p>
             <div className="action-row">
               <button className="primary" onClick={() => onNavigate("inventory")}>
                 Review existing inventory
               </button>
-              <button onClick={() => guardedAdd(guard.draft, true)}>
-                Still add it
+              <button className="override-button" onClick={overrideGuardAdd}>
+                Buy anyway override
               </button>
               <button onClick={() => setGuard(undefined)}>Cancel</button>
             </div>
@@ -446,7 +458,7 @@ export function AddItems({
       )}
 
       <section className="manual-form" aria-label="Manual item form">
-        <h2>Manual add</h2>
+        <h2>Add after check</h2>
         <label>
           Name
           <input
@@ -537,7 +549,7 @@ export function AddItems({
           </label>
         </div>
         <button className="primary" onClick={submit} disabled={!draft.name.trim()}>
-          <PackagePlus aria-hidden="true" /> Add to inventory
+          <PackagePlus aria-hidden="true" /> Add checked item
         </button>
       </section>
     </section>
@@ -598,13 +610,15 @@ function ShoppingPlanCard({
               }
             >
               {result.decision === "reduce"
-                ? "I will reduce it"
+                ? "Reduce quantity"
                 : result.decision === "check"
-                  ? "I will check first"
-                  : "I will skip it"}
+                  ? "Check inventory first"
+                  : "Skip purchase"}
             </button>
             <button onClick={onReviewInventory}>Check inventory</button>
-            <button onClick={onAddAnyway}>Buy anyway</button>
+            <button className="override-button" onClick={onAddAnyway}>
+              Buy anyway override
+            </button>
           </>
         )}
       </div>
