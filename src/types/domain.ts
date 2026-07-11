@@ -137,6 +137,21 @@ export type FoodAction = {
   note?: string;
 };
 
+export type PurchaseDecisionType =
+  | "skipped_duplicate"
+  | "reduced_quantity"
+  | "checked_inventory"
+  | "bought_anyway"
+  | "approved";
+
+export type PurchaseDecisionEvent = {
+  id: string;
+  itemName: string;
+  decision: PurchaseDecisionType;
+  reason: string;
+  occurredAt: IsoDateTime;
+};
+
 export type RiskLevel =
   | "past_suggested_date"
   | "use_today"
@@ -203,6 +218,9 @@ export type ImpactMetrics = {
   discardedItemCount: number;
   frozenItemCount: number;
   sharedItemCount: number;
+  duplicatePurchaseAvoidedCount: number;
+  buyAnywayCount: number;
+  shoppingCheckCount: number;
   estimatedSavedWeightGrams?: number;
   streakDays: number;
 };

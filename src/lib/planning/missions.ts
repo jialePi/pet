@@ -23,7 +23,7 @@ export function createMissionCard(plan: PlanItem, item: InventoryItem): MissionC
         ? "Check smell, appearance, packaging, and storage before deciding."
         : plan.suggestedAction === "add_date"
           ? "Confirm a suggested use date so planning gets smarter."
-          : "Use it in a simple meal today.";
+          : "Use some today, or pick a fallback if cooking is not realistic.";
   const rewardPreview =
     plan.suggestedAction === "freeze"
       ? "Pet energy +8"
@@ -45,11 +45,11 @@ export function createMissionCard(plan: PlanItem, item: InventoryItem): MissionC
     urgencyLabel,
     primaryActionLabel:
       plan.suggestedAction === "freeze"
-        ? "I froze it"
+        ? "Frozen"
         : isReview
-          ? "I checked it"
-          : "I used it",
+          ? "Checked"
+          : "Used some",
     secondaryActionLabel:
-      plan.suggestedAction === "freeze" ? "I used it instead" : "Freeze instead",
+      plan.suggestedAction === "freeze" ? "Used some instead" : "No time: freeze",
   };
 }

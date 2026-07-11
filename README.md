@@ -12,7 +12,7 @@ Users can add food manually, from mock receipt/photo flows, or through AI image 
 - AI daily plan with recipe steps and synchronized inventory tasks.
 - Purchase guard for duplicates and too much high-risk food.
 - Demo date controls for testing future planning.
-- Optional Google AI Studio / OpenAI-backed image recognition and coaching.
+- Optional Google AI Studio / OpenAI-backed image recognition and rescue planning.
 - Local-first storage for hackathon demo use.
 
 ## Run Locally
@@ -23,6 +23,16 @@ npm run dev
 ```
 
 Open the local URL printed by Vite.
+
+## Demo QR Code
+
+Use the `Show QR` button in the top bar to generate a QR code from the current browser URL.
+
+- `localhost` or `127.0.0.1`: only works on the same computer.
+- private Wi-Fi addresses such as `192.168.x.x`: can work on devices on the same network.
+- deployed HTTPS URLs: suitable for judges and public hackathon demos.
+
+The QR code is generated in the browser. No QR service or server API is required. Each phone keeps its own local demo data, so judges do not affect each other's inventory or pet state.
 
 ## Optional AI Setup
 

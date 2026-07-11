@@ -20,11 +20,13 @@ function App() {
   const {
     items,
     actions,
+    purchaseDecisions,
     pet,
     lastToast,
     addManualItem,
     updateInventoryItem,
     recordAction,
+    recordPurchaseDecision,
     resetDemo,
     clearAll,
     dismissToast,
@@ -42,7 +44,7 @@ function App() {
       return item ? createMissionCard(planItem, item) : undefined;
     })
     .filter((mission): mission is MissionCard => Boolean(mission));
-  const impact = calculateImpact({ items, actions, pet });
+  const impact = calculateImpact({ items, actions, purchaseDecisions, pet });
 
   return (
     <div className="app-shell">
@@ -68,7 +70,12 @@ function App() {
           />
         )}
         {view === "add" && (
-          <AddItems items={availableItems} onAdd={addManualItem} onNavigate={setView} />
+          <AddItems
+            items={availableItems}
+            onAdd={addManualItem}
+            onNavigate={setView}
+            onRecordPurchaseDecision={recordPurchaseDecision}
+          />
         )}
         {view === "inventory" && (
           <Inventory

@@ -1,9 +1,18 @@
 import { useState, type DragEvent } from "react";
-import { Camera, ClipboardList, PackagePlus, ScanSearch, ShieldAlert } from "lucide-react";
+import {
+  Camera,
+  CheckCircle2,
+  ClipboardList,
+  PackagePlus,
+  ScanSearch,
+  ShieldAlert,
+  ShoppingBasket,
+} from "lucide-react";
 import type {
   FoodCategory,
   InventoryItem,
   InventoryItemDraft,
+  PurchaseDecisionType,
   PurchaseGuardResult,
   QuantityUnit,
   RecognitionCandidate,
@@ -19,7 +28,11 @@ import type {
   RecognizeImageError,
   RecognizeImageResponse,
 } from "../../lib/recognition/aiRecognition";
-import { evaluatePurchaseGuard } from "../../lib/purchase-guard/purchaseGuard";
+import {
+  evaluatePurchaseGuard,
+  reviewShoppingPlan,
+  type ShoppingPlanReviewItem,
+} from "../../lib/purchase-guard/purchaseGuard";
 import { todayIso } from "../../lib/dates/dates";
 
 const categoryOptions: FoodCategory[] = [
@@ -51,6 +64,8 @@ const unitOptions: QuantityUnit[] = [
   "can",
   "g",
   "kg",
+  "ml",
+  "l",
   "serving",
   "unknown",
 ];
@@ -59,9 +74,19 @@ type AddItemsProps = {
   items: InventoryItem[];
   onAdd: (draft: InventoryItemDraft) => void;
   onNavigate: (view: View) => void;
+  onRecordPurchaseDecision: (input: {
+    itemName: string;
+    decision: PurchaseDecisionType;
+    reason: string;
+  }) => void;
 };
 
-export function AddItems({ items, onAdd, onNavigate }: AddItemsProps) {
+export function AddItems({
+  items,
+  onAdd,
+  onNavigate,
+  onRecordPurchaseDecision,
+}: AddItemsProps) {
   const [draft, setDraft] = useState<InventoryItemDraft>({
     name: "",
     category: "produce",
@@ -82,6 +107,15 @@ export function AddItems({ items, onAdd, onNavigate }: AddItemsProps) {
     | { kind: "error"; message: string }
   >({ kind: "idle" });
   const [candidateDrafts, setCandidateDrafts] = useState<InventoryItemDraft[]>([]);
+  const [shoppingPlanText, setShoppingPlanText] = useState(
+    "spinach\nmilk\nice cream",
+  );
+  const [shoppingPlanResults, setShoppingPlanResults] = useState<
+    ShoppingPlanReviewItem[]
+  >([]);
+  const [resolvedShoppingIds, setResolvedShoppingIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [rejectedCandidateIds, setRejectedCandidateIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -114,6 +148,33 @@ export function AddItems({ items, onAdd, onNavigate }: AddItemsProps) {
       onNavigate("dashboard");
     }
     return true;
+  }
+
+  function checkShoppingPlan() {
+    const results = reviewShoppingPlan({
+      text: shoppingPlanText,
+      activeItems: items,
+      today: todayIso(),
+    });
+    setShoppingPlanResults(results);
+    setResolvedShoppingIds(new Set());
+    setGuard(undefined);
+  }
+
+  function resolveShoppingDecision(id: string) {
+    setResolvedShoppingIds((current) => new Set(current).add(id));
+  }
+
+  function recordShoppingDecision(
+    result: ShoppingPlanReviewItem,
+    decision: PurchaseDecisionType,
+  ) {
+    onRecordPurchaseDecision({
+      itemName: result.draft.name,
+      decision,
+      reason: result.message,
+    });
+    resolveShoppingDecision(result.id);
   }
 
   function submit() {
@@ -219,9 +280,62 @@ export function AddItems({ items, onAdd, onNavigate }: AddItemsProps) {
       <div className="section-heading">
         <div>
           <span className="eyebrow">Add items</span>
-          <h1>Build the pantry map</h1>
+          <h1>Check before buying</h1>
         </div>
       </div>
+
+      <section className="shopping-plan-panel" aria-labelledby="shopping-plan-title">
+        <div className="shopping-plan-copy">
+          <span className="eyebrow">Pet purchase guard</span>
+          <h2 id="shopping-plan-title">Shopping plan check</h2>
+          <p>
+            Paste a planned shop before buying. The pet checks for duplicates and
+            high-risk overbuying without asking you to track every bite.
+          </p>
+        </div>
+        <div className="shopping-plan-input">
+          <label>
+            Planned purchases
+            <textarea
+              value={shoppingPlanText}
+              onChange={(event) => setShoppingPlanText(event.target.value)}
+              rows={4}
+              placeholder="spinach&#10;2 milk&#10;ice cream"
+            />
+          </label>
+          <button
+            className="primary"
+            onClick={checkShoppingPlan}
+            disabled={!shoppingPlanText.trim()}
+          >
+            <ShoppingBasket aria-hidden="true" /> Ask pet before buying
+          </button>
+        </div>
+        {shoppingPlanResults.length > 0 && (
+          <div className="shopping-results" aria-label="Shopping plan review">
+            {shoppingPlanResults.map((result) => (
+              <ShoppingPlanCard
+                key={result.id}
+                result={result}
+                resolved={resolvedShoppingIds.has(result.id)}
+                onResolve={(decision) => recordShoppingDecision(result, decision)}
+                onAddAnyway={() => {
+                  onRecordPurchaseDecision({
+                    itemName: result.draft.name,
+                    decision: result.decision === "ok" ? "approved" : "bought_anyway",
+                    reason: result.message,
+                  });
+                  guardedAdd(result.draft, true);
+                }}
+                onReviewInventory={() => {
+                  recordShoppingDecision(result, "checked_inventory");
+                  onNavigate("inventory");
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </section>
 
       <div className="upload-grid">
         <AiImageDropzone
@@ -411,6 +525,74 @@ export function AddItems({ items, onAdd, onNavigate }: AddItemsProps) {
         </button>
       </section>
     </section>
+  );
+}
+
+function ShoppingPlanCard({
+  result,
+  resolved,
+  onResolve,
+  onAddAnyway,
+  onReviewInventory,
+}: {
+  result: ShoppingPlanReviewItem;
+  resolved: boolean;
+  onResolve: (decision: PurchaseDecisionType) => void;
+  onAddAnyway: () => void;
+  onReviewInventory: () => void;
+}) {
+  const decisionLabel = {
+    skip: "Skip",
+    reduce: "Reduce",
+    check: "Check first",
+    ok: "Looks ok",
+  } satisfies Record<ShoppingPlanReviewItem["decision"], string>;
+
+  return (
+    <article className={`shopping-result-card ${result.decision} ${resolved ? "resolved" : ""}`}>
+      <div className="shopping-result-topline">
+        <span className="risk-chip">{decisionLabel[result.decision]}</span>
+        {resolved && (
+          <span className="status-chip">
+            <CheckCircle2 aria-hidden="true" /> Decision made
+          </span>
+        )}
+      </div>
+      <h3>{result.draft.name}</h3>
+      <p>{result.petLine}</p>
+      <p className="suggestion">{result.nextStep}</p>
+      <small>{result.message}</small>
+      <div className="action-row">
+        {result.decision === "ok" ? (
+          <button className="primary" onClick={onAddAnyway}>
+            Add after buying
+          </button>
+        ) : (
+          <>
+            <button
+              className="primary"
+              onClick={() =>
+                onResolve(
+                  result.decision === "reduce"
+                    ? "reduced_quantity"
+                    : result.decision === "check"
+                      ? "checked_inventory"
+                      : "skipped_duplicate",
+                )
+              }
+            >
+              {result.decision === "reduce"
+                ? "I will reduce it"
+                : result.decision === "check"
+                  ? "I will check first"
+                  : "I will skip it"}
+            </button>
+            <button onClick={onReviewInventory}>Check inventory</button>
+            <button onClick={onAddAnyway}>Buy anyway</button>
+          </>
+        )}
+      </div>
+    </article>
   );
 }
 

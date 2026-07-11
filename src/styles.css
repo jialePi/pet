@@ -20,11 +20,14 @@ body {
 
 button,
 input,
-select {
+select,
+textarea,
+a.button-link {
   font: inherit;
 }
 
-button {
+button,
+a.button-link {
   border: 1px solid #d9d2c5;
   background: #fffaf2;
   color: #24302f;
@@ -36,9 +39,11 @@ button {
   justify-content: center;
   gap: 0.45rem;
   min-height: 40px;
+  text-decoration: none;
 }
 
-button:hover {
+button:hover,
+a.button-link:hover {
   border-color: #92b86f;
 }
 
@@ -47,7 +52,8 @@ button:disabled {
   opacity: 0.5;
 }
 
-button svg {
+button svg,
+a.button-link svg {
   width: 18px;
   height: 18px;
 }
@@ -510,6 +516,96 @@ progress {
   margin: 0 auto;
 }
 
+.shopping-plan-panel {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(280px, 1fr);
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 1rem;
+  border: 1px solid #c3d7d5;
+  border-radius: 8px;
+  background: #edf5f5;
+  padding: 1rem;
+}
+
+.shopping-plan-copy h2 {
+  margin: 0.2rem 0 0.5rem;
+}
+
+.shopping-plan-copy p {
+  color: #55615d;
+}
+
+.shopping-plan-input {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.shopping-plan-input label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 700;
+}
+
+.shopping-plan-input textarea {
+  width: 100%;
+  min-height: 110px;
+  resize: vertical;
+  border: 1px solid #d9d2c5;
+  border-radius: 8px;
+  padding: 0.7rem;
+  background: white;
+}
+
+.shopping-results {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.shopping-result-card {
+  display: grid;
+  gap: 0.55rem;
+  border: 1px solid #e3dacb;
+  border-radius: 8px;
+  background: #fffef9;
+  padding: 0.85rem;
+}
+
+.shopping-result-card.skip,
+.shopping-result-card.reduce {
+  border-color: #d86c4d;
+  background: #fff4ed;
+}
+
+.shopping-result-card.check {
+  border-color: #c9b05a;
+  background: #fff6d8;
+}
+
+.shopping-result-card.ok,
+.shopping-result-card.resolved {
+  border-color: #92b86f;
+  background: #edf5e8;
+}
+
+.shopping-result-card h3 {
+  margin: 0;
+}
+
+.shopping-result-card p,
+.shopping-result-card small {
+  color: #55615d;
+}
+
+.shopping-result-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .upload-grid,
 .form-grid,
 .inventory-controls,
@@ -881,6 +977,103 @@ progress {
   border-color: rgba(255, 255, 255, 0.25);
 }
 
+.qr-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1rem;
+  overflow: auto;
+  background: rgba(36, 48, 47, 0.38);
+}
+
+.qr-dialog {
+  width: min(420px, 100%);
+  max-height: none;
+  overflow: auto;
+  border: 1px solid #e3dacb;
+  border-radius: 8px;
+  background: #fffaf2;
+  box-shadow: 0 24px 70px rgba(36, 48, 47, 0.28);
+  padding: 1rem;
+  margin: 0;
+}
+
+.qr-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.qr-heading h2 {
+  margin: 0.15rem 0 0;
+}
+
+.qr-status {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e3dacb;
+  padding: 0.75rem;
+  background: #fffef9;
+}
+
+.qr-status span {
+  color: #55615d;
+}
+
+.qr-status.public {
+  border-color: #92b86f;
+  background: #edf5e8;
+}
+
+.qr-status.network {
+  border-color: #c9b05a;
+  background: #fff6d8;
+}
+
+.qr-status.local {
+  border-color: #d86c4d;
+  background: #fff4ed;
+}
+
+.qr-code-frame {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  margin: 1rem 0;
+  border-radius: 8px;
+  border: 1px solid #e3dacb;
+  background: #fffef9;
+}
+
+.qr-code-frame img {
+  width: min(220px, 100%);
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.qr-url {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  border-radius: 8px;
+  background: #f4e5cb;
+  color: #6b4a24;
+  padding: 0.65rem;
+}
+
+.qr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
 @media (max-width: 980px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
@@ -909,6 +1102,10 @@ progress {
 
   .date-controls {
     width: 100%;
+  }
+
+  .shopping-plan-panel {
+    grid-template-columns: 1fr;
   }
 
   nav button {

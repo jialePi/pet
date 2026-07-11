@@ -1,4 +1,4 @@
-import { Heart, IceCreamBowl, Leaf, PawPrint } from "lucide-react";
+import { Heart, IceCreamBowl, Leaf, PawPrint, ShieldCheck, ShoppingBasket } from "lucide-react";
 import type { ImpactMetrics, PetState } from "../../types/domain";
 
 type ImpactProps = {
@@ -17,12 +17,24 @@ export function Impact({ impact, pet }: ImpactProps) {
       </div>
       <div className="impact-grid">
         <ImpactCard icon={<Leaf />} label="Items rescued" value={impact.savedItemCount} />
+        <ImpactCard
+          icon={<ShieldCheck />}
+          label="Duplicate buys avoided"
+          value={impact.duplicatePurchaseAvoidedCount}
+        />
+        <ImpactCard
+          icon={<ShoppingBasket />}
+          label="Shopping checks"
+          value={impact.shoppingCheckCount}
+        />
         <ImpactCard icon={<IceCreamBowl />} label="Frozen for later" value={impact.frozenItemCount} />
         <ImpactCard icon={<Heart />} label="Shared" value={impact.sharedItemCount} />
         <ImpactCard icon={<PawPrint />} label="Streak days" value={impact.streakDays} />
       </div>
       <p className="privacy-note">
-        Estimated saved weight: {impact.estimatedSavedWeightGrams ?? 0}g. This is a planning estimate, not a verified environmental claim.
+        Estimated waste avoided: {impact.estimatedSavedWeightGrams ?? 0}g. Duplicate-buy
+        prevention, rescue actions, and freezing are behavior signals, not verified
+        environmental claims. Buy-anyway overrides: {impact.buyAnywayCount}.
       </p>
       <p className="privacy-note">
         Dates and suggestions are planning aids. Check smell, appearance, packaging, storage conditions, and local food safety guidance before eating.

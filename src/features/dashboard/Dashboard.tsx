@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Bot,
   Check,
   ChefHat,
   MessageCircle,
@@ -20,7 +19,6 @@ import type {
 } from "../../types/domain";
 import type { View } from "../../app/types";
 import { Meter } from "../../components/ui/Meter";
-import type { AiCoachError, AiCoachResponse } from "../../lib/ai/coach";
 import type {
   AiDailyPlanError,
   AiDailyPlanResponse,
@@ -55,12 +53,6 @@ export function Dashboard({
   onResetDemo,
 }: DashboardProps) {
   const [petLine, setPetLine] = useState("Tap the pet for a kitchen clue.");
-  const [coach, setCoach] = useState<
-    | { kind: "idle" }
-    | { kind: "loading"; message: string }
-    | { kind: "success"; response: AiCoachResponse }
-    | { kind: "error"; message: string; fallback: AiCoachResponse }
-  >({ kind: "idle" });
   const [dailyPlan, setDailyPlan] = useState<
     | { kind: "idle" }
     | { kind: "loading"; message: string }
@@ -109,65 +101,6 @@ export function Dashboard({
         : { ...current, fallback: nextResponse };
     });
   }, [activePlanItemsKey, activePlanItems]);
-
-  async function askAiCoach() {
-    setCoach({ kind: "loading", message: "Asking AI coach for a flexible plan..." });
-    try {
-      const response = await fetch("/api/coach", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          activeItems: activePlanItems.map((item) => ({
-            id: item.id,
-            name: item.name,
-            category: item.category,
-            quantity: item.quantity,
-            unit: item.unit,
-            storageLocation: item.storageLocation,
-            suggestedUseByDate: item.suggestedUseByDate,
-            status: item.status,
-          })),
-          missions: missions.slice(0, 5).map((mission) => ({
-            title: mission.title,
-            itemName: mission.itemName,
-            reason: mission.reason,
-            suggestedAction: mission.suggestedAction,
-            rewardPreview: mission.rewardPreview,
-            urgencyLabel: mission.urgencyLabel,
-          })),
-          pet: {
-            health: pet.health,
-            mood: pet.mood,
-            energy: pet.energy,
-            trust: pet.trust,
-            visualState: pet.visualState,
-          },
-          today,
-        }),
-      });
-      const payload = (await response.json()) as AiCoachResponse | AiCoachError;
-      if (!response.ok || "error" in payload) {
-        throw new Error(
-          "error" in payload
-            ? payload.error
-            : "AI coach returned an unexpected response.",
-        );
-      }
-      setPetLine(payload.petLine);
-      setCoach({ kind: "success", response: payload });
-    } catch (error) {
-      const fallback = createLocalCoachResponse(petContext);
-      setPetLine(fallback.petLine);
-      setCoach({
-        kind: "error",
-        message:
-          error instanceof Error
-            ? `${error.message} Using rule-based coach instead.`
-            : "Using rule-based coach instead.",
-        fallback,
-      });
-    }
-  }
 
   async function askDailyPlan() {
     setDailyPlan({ kind: "loading", message: "Building today's recipe and usage tasks..." });
@@ -296,29 +229,10 @@ export function Dashboard({
             <button onClick={() => setPetLine(getPetMessage("mood", petContext))}>
               <PawPrint aria-hidden="true" /> Mood check
             </button>
-            <button onClick={() => void askAiCoach()}>
-              <Bot aria-hidden="true" /> AI coach
-            </button>
             <button onClick={() => void askDailyPlan()}>
-              <ChefHat aria-hidden="true" /> AI daily plan
+              <ChefHat aria-hidden="true" /> Rescue plan
             </button>
           </div>
-          {coach.kind !== "idle" && (
-            <section
-              className={`ai-coach ${coach.kind}`}
-              role={coach.kind === "error" ? "alert" : "status"}
-              aria-label="AI coach plan"
-            >
-              {coach.kind === "loading" ? (
-                <p>{coach.message}</p>
-              ) : (
-                <AiCoachPlan
-                  response={coach.kind === "success" ? coach.response : coach.fallback}
-                  message={coach.kind === "error" ? coach.message : undefined}
-                />
-              )}
-            </section>
-          )}
           {dailyPlan.kind !== "idle" && (
             <section
               className={`ai-coach ${dailyPlan.kind}`}
@@ -454,29 +368,6 @@ function getPetMessage(kind: PetMessageKind, context: PetInteractionContext): st
   return "I may need a careful fridge check. Use your senses and local food safety guidance.";
 }
 
-function AiCoachPlan({
-  response,
-  message,
-}: {
-  response: AiCoachResponse;
-  message?: string;
-}) {
-  return (
-    <div>
-      {message && <p>{message}</p>}
-      <span className="eyebrow">
-        {response.provider === "rules" ? "Rule fallback" : `AI coach · ${response.model}`}
-      </span>
-      <p>{response.planSummary}</p>
-      <ul>
-        {response.suggestedActions.map((action) => (
-          <li key={action}>{action}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 function AiDailyPlanPanel({
   response,
   message,
@@ -584,25 +475,6 @@ function AiDailyPlanPanel({
   );
 }
 
-function createLocalCoachResponse(context: PetInteractionContext): AiCoachResponse {
-  const firstMission = context.missions[0];
-  return {
-    petLine: getPetMessage("mission", context),
-    planSummary: firstMission
-      ? `Start with ${firstMission.itemName}, then check the inventory before buying more.`
-      : "Inventory looks calm; keep the next shop intentional.",
-    suggestedActions: firstMission
-      ? [
-          firstMission.suggestedAction,
-          "Check smell, appearance, packaging, and storage before using any uncertain food.",
-          "Review the inventory list before adding duplicates.",
-        ]
-      : ["Add recent groceries from a receipt or food photo.", "Review pantry items this week."],
-    provider: "rules",
-    model: "local-rules",
-  };
-}
-
 function createLocalDailyPlan(context: PetInteractionContext): AiDailyPlanResponse {
   const prioritizedItems = context.missions
     .slice(0, 3)
@@ -684,9 +556,14 @@ export function MissionCardView({
   ) => void;
 }) {
   const primaryAction: FoodActionType =
-    mission.primaryActionLabel === "I froze it" ? "frozen" : "used";
+    mission.primaryActionLabel === "Frozen"
+      ? "frozen"
+      : mission.primaryActionLabel === "Used some"
+        ? "partially_used"
+        : "used";
   const secondaryAction: FoodActionType =
-    mission.secondaryActionLabel === "Freeze instead" ? "frozen" : "used";
+    mission.secondaryActionLabel === "No time: freeze" ? "frozen" : "partially_used";
+  const partialQuantity = Math.min(1, item.quantity);
 
   return (
     <article className={`mission-card ${mission.urgencyLabel.toLowerCase()}`}>
@@ -698,11 +575,39 @@ export function MissionCardView({
       <p>{mission.reason}</p>
       <p className="suggestion">{mission.suggestedAction}</p>
       <div className="action-row">
-        <button className="primary" onClick={() => onRecordAction(item, primaryAction)}>
+        <button
+          className="primary"
+          onClick={() =>
+            onRecordAction(
+              item,
+              primaryAction,
+              primaryAction === "partially_used" ? partialQuantity : undefined,
+              primaryAction === "partially_used"
+                ? "Lightweight check-in: used some, not exact tracking."
+                : undefined,
+            )
+          }
+        >
           <Check aria-hidden="true" /> {mission.primaryActionLabel}
         </button>
+        {primaryAction === "partially_used" && (
+          <button onClick={() => onRecordAction(item, "used", undefined, "Marked finished from mission.")}>
+            Finished
+          </button>
+        )}
         {mission.secondaryActionLabel && (
-          <button onClick={() => onRecordAction(item, secondaryAction)}>
+          <button
+            onClick={() =>
+              onRecordAction(
+                item,
+                secondaryAction,
+                secondaryAction === "partially_used" ? partialQuantity : undefined,
+                secondaryAction === "frozen"
+                  ? "Fallback rescue: no time to cook, so frozen."
+                  : "Used some instead of freezing.",
+              )
+            }
+          >
             {mission.secondaryActionLabel}
           </button>
         )}

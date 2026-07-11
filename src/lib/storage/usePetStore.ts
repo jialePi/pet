@@ -6,6 +6,8 @@ import type {
   InventoryItem,
   InventoryItemDraft,
   PetState,
+  PurchaseDecisionEvent,
+  PurchaseDecisionType,
 } from "../../types/domain";
 import { demoActions, demoItems, demoPet } from "../../data/demoData";
 import { calculatePetState } from "../pet-state/petState";
@@ -15,6 +17,7 @@ import { applyInventoryAction } from "./inventoryUsage";
 type PetStore = {
   items: InventoryItem[];
   actions: FoodAction[];
+  purchaseDecisions: PurchaseDecisionEvent[];
   pet: PetState;
   lastToast?: string;
   addManualItem: (draft: InventoryItemDraft) => void;
@@ -28,6 +31,11 @@ type PetStore = {
     quantity?: number,
     note?: string,
   ) => void;
+  recordPurchaseDecision: (input: {
+    itemName: string;
+    decision: PurchaseDecisionType;
+    reason: string;
+  }) => void;
   resetDemo: () => void;
   clearAll: () => void;
   dismissToast: () => void;
@@ -62,6 +70,7 @@ export const usePetStore = create<PetStore>()(
     (set, get) => ({
       items: demoItems,
       actions: demoActions,
+      purchaseDecisions: [],
       pet: demoPet,
       addManualItem: (draft) => {
         const item = toInventoryItem(draft);
@@ -139,7 +148,7 @@ export const usePetStore = create<PetStore>()(
           type === "partially_used"
             ? usage.item.status === "used"
               ? `${item.name} finished. Pet health +6`
-              : `${item.name} updated. ${formatQuantity(usage.item.quantity)} ${item.unit} left.`
+              : `${item.name} check-in saved. I will keep it on the rescue list.`
             : type === "used"
               ? `${item.name} rescued. Pet health +6`
               : type === "frozen"
@@ -154,10 +163,35 @@ export const usePetStore = create<PetStore>()(
           lastToast: label,
         });
       },
+      recordPurchaseDecision: (input) => {
+        const decision: PurchaseDecisionEvent = {
+          id: createId("purchase"),
+          itemName: input.itemName,
+          decision: input.decision,
+          reason: input.reason,
+          occurredAt: new Date().toISOString(),
+        };
+        const currentDecisions = get().purchaseDecisions ?? [];
+        const label =
+          input.decision === "skipped_duplicate"
+            ? `${input.itemName} skipped. Duplicate purchase avoided.`
+            : input.decision === "reduced_quantity"
+              ? `${input.itemName} reduced. Pet trust +2`
+              : input.decision === "checked_inventory"
+                ? `${input.itemName} flagged for fridge check.`
+                : input.decision === "bought_anyway"
+                  ? `${input.itemName} bought anyway. I will track the risk.`
+                  : `${input.itemName} approved for planned shop.`;
+        set({
+          purchaseDecisions: [decision, ...currentDecisions],
+          lastToast: label,
+        });
+      },
       resetDemo: () =>
         set({
           items: demoItems,
           actions: demoActions,
+          purchaseDecisions: [],
           pet: demoPet,
           lastToast: "Demo pantry restored.",
         }),
@@ -165,6 +199,7 @@ export const usePetStore = create<PetStore>()(
         set({
           items: [],
           actions: [],
+          purchaseDecisions: [],
           pet: demoPet,
           lastToast: "Local inventory cleared.",
         }),
@@ -175,7 +210,3 @@ export const usePetStore = create<PetStore>()(
     },
   ),
 );
-
-function formatQuantity(quantity: number): string {
-  return Number.isInteger(quantity) ? String(quantity) : quantity.toFixed(1);
-}
