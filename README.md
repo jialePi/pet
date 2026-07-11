@@ -61,6 +61,8 @@ from one Cloudflare Worker. Static assets are configured in `wrangler.jsonc`, wh
 `GET /api/health` reports whether the Worker is running and whether an AI
 provider secret is configured, without exposing the secret itself.
 
+Live deployment: https://pet-food-waste.jialepi-apps.workers.dev
+
 For local Worker development, create an ignored `.dev.vars` file:
 
 ```bash
