@@ -1283,7 +1283,7 @@ progress {
 .toast-reward {
   min-width: min(360px, calc(100vw - 2rem));
   border: 1px solid rgba(167, 239, 187, 0.5);
-  background: linear-gradient(135deg, #145b3e, #237b51);
+  background: linear-gradient(135deg, #4f9f6d, #74bd88);
 }
 
 .toast-reward-badge {
@@ -1294,7 +1294,7 @@ progress {
   flex: 0 0 46px;
   border-radius: 50%;
   background: #b9f2c8;
-  color: #145b3e;
+  color: #1f5f3c;
   font-weight: 900;
   font-size: 1.05rem;
   animation: score-pop 420ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
@@ -1537,19 +1537,19 @@ a.button-link:focus-visible {
 }
 
 .primary {
-  border-color: #237b51;
-  background: #237b51;
+  border-color: #63ae78;
+  background: #63ae78;
   color: #f7fff8;
-  box-shadow: 0 5px 0 #15563a;
+  box-shadow: 0 5px 0 #43885a;
 }
 
 .primary:hover {
-  border-color: #2d9160;
-  background: #2d9160;
+  border-color: #78c58b;
+  background: #78c58b;
 }
 
 .primary:active {
-  box-shadow: 0 2px 0 #15563a;
+  box-shadow: 0 2px 0 #43885a;
 }
 
 .topbar {
@@ -1559,13 +1559,13 @@ a.button-link:focus-visible {
 
 .brand svg,
 .empty-state svg {
-  color: #237b51;
+  color: #63ae78;
 }
 
 nav button.active {
-  background: #16583c;
+  background: #63ae78;
   color: #f4fff6;
-  border-color: #16583c;
+  border-color: #63ae78;
 }
 
 .waste-brief,
@@ -1604,6 +1604,16 @@ nav button.active {
   border-radius: 16px;
 }
 
+.pet-room.hungry .room-scene {
+  background:
+    radial-gradient(circle at 75% 18%, rgba(132, 213, 148, 0.34), transparent 30%),
+    linear-gradient(180deg, #e9f8ed, #d8f0df);
+}
+
+.pet-room > .pet-status-panel {
+  margin-top: 0.85rem;
+}
+
 .fridge {
   background: #f6fff7;
   border-color: #b7dfc0;
@@ -1618,8 +1628,8 @@ nav button.active {
 
 .pet-status-panel.hungry,
 .pet-status-panel.tired {
-  border-color: #e6d596;
-  background: #fffbed;
+  border-color: #a8d9b4;
+  background: #f0fbf2;
 }
 
 .pet-status-panel.sad,

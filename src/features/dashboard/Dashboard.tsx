@@ -268,6 +268,11 @@ export function Dashboard({
             <span className="pet-shadow" />
           </button>
         </div>
+        <PetStatusPanel
+          pet={pet}
+          hasUrgentMissions={hasUrgentMissions}
+          visualState={displayVisualState}
+        />
         <div className="pet-copy">
           <p aria-live="polite">{petLine}</p>
           <div className="pet-actions" aria-label="Pet interaction choices">
@@ -276,9 +281,6 @@ export function Dashboard({
             </button>
             <button onClick={() => setPetLine(getPetMessage("shopping", petContext))}>
               <ShoppingBasket aria-hidden="true" /> Shopping check
-            </button>
-            <button onClick={() => setPetLine(getPetMessage("mood", petContext))}>
-              <PawPrint aria-hidden="true" /> Mood check
             </button>
             <button onClick={() => void askDailyPlan()}>
               <ChefHat aria-hidden="true" /> Rescue plan
@@ -305,11 +307,6 @@ export function Dashboard({
               )}
             </section>
           )}
-          <PetStatusPanel
-            pet={pet}
-            hasUrgentMissions={hasUrgentMissions}
-            visualState={displayVisualState}
-          />
         </div>
       </section>
 

@@ -180,9 +180,7 @@ describe("Dashboard pet interactions", () => {
     expect(screen.getByText(/I will ask you to pause/)).toBeInTheDocument();
   });
 
-  it("shows mood-specific pet feedback", async () => {
-    const user = userEvent.setup();
-
+  it("shows the pet mood by default and removes the mood action button", () => {
     render(
       <Dashboard
         items={[item]}
@@ -196,11 +194,10 @@ describe("Dashboard pet interactions", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Mood check" }));
-
     expect(
-      screen.getByText("I am watching the urgent items. One rescue today would help."),
+      screen.getByText("The pet is pointing at today's most waste-risky food."),
     ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Mood check" })).not.toBeInTheDocument();
   });
 
   it("shows a local rescue plan when remote AI is unavailable", async () => {
