@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Pencil, Save, Trash2, X } from "lucide-react";
+import { Pencil, RotateCcw, Save, Search, Trash2, X } from "lucide-react";
 import type {
   FoodActionType,
+  FoodCategory,
   InventoryItem,
   InventoryItemDraft,
   InventoryStatus,
@@ -24,6 +25,7 @@ type InventoryProps = {
 };
 
 type StatusFilter = "available" | "active" | "all" | InventoryStatus;
+type CategoryFilter = "all" | FoodCategory;
 type SortMode = "date" | "risk" | "name";
 
 const statusOptions: StatusFilter[] = [
@@ -34,6 +36,20 @@ const statusOptions: StatusFilter[] = [
   "frozen",
   "shared",
   "discarded",
+];
+
+const categoryOptions: CategoryFilter[] = [
+  "all",
+  "produce",
+  "dairy",
+  "meat",
+  "seafood",
+  "bakery",
+  "pantry",
+  "frozen",
+  "prepared",
+  "beverage",
+  "other",
 ];
 
 const storageOptions: StorageLocation[] = [
@@ -59,13 +75,29 @@ export function Inventory({
   onRecordAction,
   onClearAll,
 }: InventoryProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("available");
   const [sortMode, setSortMode] = useState<SortMode>("date");
   const [editingId, setEditingId] = useState<string | undefined>();
   const [editDraft, setEditDraft] = useState<Partial<InventoryItemDraft>>({});
   const visibleItems = items
+    .filter((item) => matchesSearchQuery(item, searchQuery))
+    .filter((item) => categoryFilter === "all" || item.category === categoryFilter)
     .filter((item) => matchesStatusFilter(item, statusFilter))
     .sort((a, b) => compareItems(a, b, sortMode, today));
+  const filtersAreActive =
+    searchQuery.trim().length > 0 ||
+    categoryFilter !== "all" ||
+    statusFilter !== "available" ||
+    sortMode !== "date";
+
+  function clearFilters() {
+    setSearchQuery("");
+    setCategoryFilter("all");
+    setStatusFilter("available");
+    setSortMode("date");
+  }
 
   function startEditing(item: InventoryItem) {
     setEditingId(item.id);
@@ -104,6 +136,33 @@ export function Inventory({
         </button>
       </div>
       <div className="inventory-controls" aria-label="Inventory controls">
+        <label className="inventory-search">
+          Search
+          <span className="search-input-wrap">
+            <Search aria-hidden="true" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search food names"
+            />
+          </span>
+        </label>
+        <label>
+          Category
+          <select
+            value={categoryFilter}
+            onChange={(event) =>
+              setCategoryFilter(event.target.value as CategoryFilter)
+            }
+          >
+            {categoryOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
         <label>
           Status
           <select
@@ -128,13 +187,31 @@ export function Inventory({
             <option value="name">name</option>
           </select>
         </label>
-        <span className="inventory-count">{visibleItems.length} shown</span>
+        <div className="inventory-results">
+          <span className="inventory-count">
+            {visibleItems.length} of {items.length} shown
+          </span>
+          {filtersAreActive && (
+            <button className="clear-filters" onClick={clearFilters}>
+              <RotateCcw aria-hidden="true" /> Clear filters
+            </button>
+          )}
+        </div>
       </div>
       <div className="inventory-list">
         {visibleItems.length === 0 ? (
           <div className="empty-state">
-            <h2>No items match this view</h2>
-            <p>Change the status filter or add food from a receipt, photo, or manual entry.</p>
+            <h2>{items.length === 0 ? "Your inventory is empty" : "No items found"}</h2>
+            <p>
+              {items.length === 0
+                ? "Add food from a receipt, photo, or manual entry to get started."
+                : "Try another search or clear the current filters."}
+            </p>
+            {items.length > 0 && filtersAreActive && (
+              <button onClick={clearFilters}>
+                <RotateCcw aria-hidden="true" /> Clear filters
+              </button>
+            )}
           </div>
         ) : (
           visibleItems.map((item) => {
@@ -193,6 +270,12 @@ export function Inventory({
       </div>
     </section>
   );
+}
+
+function matchesSearchQuery(item: InventoryItem, searchQuery: string): boolean {
+  const query = searchQuery.trim().toLocaleLowerCase();
+  if (!query) return true;
+  return item.name.toLocaleLowerCase().includes(query);
 }
 
 function getDisplayRiskLabel(

@@ -703,6 +703,30 @@ progress {
   margin-bottom: 1rem;
 }
 
+.inventory-search {
+  min-width: min(260px, 100%);
+}
+
+.search-input-wrap {
+  position: relative;
+}
+
+.search-input-wrap svg {
+  position: absolute;
+  top: 50%;
+  left: 0.7rem;
+  width: 1rem;
+  height: 1rem;
+  color: #69736f;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.inventory-controls .search-input-wrap input {
+  width: 100%;
+  padding-left: 2.15rem;
+}
+
 .inventory-controls label,
 .inventory-edit-grid label {
   display: grid;
@@ -723,7 +747,18 @@ progress {
 .inventory-count {
   color: #69736f;
   font-weight: 800;
-  padding-bottom: 0.75rem;
+}
+
+.inventory-results {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  min-height: 2.75rem;
+}
+
+.clear-filters {
+  white-space: nowrap;
 }
 
 .inventory-main {
