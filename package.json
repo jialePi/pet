@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:cloudflare": "npm run build:cloudflare && wrangler dev",
     "build": "tsc -b && vite build",
+    "build:cloudflare": "tsc -b && tsc -p tsconfig.worker.json && vite build --mode cloudflare",
+    "deploy": "npm run build:cloudflare && wrangler deploy",
     "preview": "vite preview",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.worker.json"
   },
   "dependencies": {
     "date-fns": "^4.1.0",
@@ -33,6 +36,7 @@
     "globals": "^15.14.0",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.18.2",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "wrangler": "^4.110.0"
   }
 }

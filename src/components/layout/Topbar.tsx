@@ -148,6 +148,9 @@ export function Topbar({
         <button className={view === "impact" ? "active" : ""} onClick={() => onNavigate("impact")}>
           Impact
         </button>
+        <button className={view === "settings" ? "active" : ""} onClick={() => onNavigate("settings")}>
+          AI Settings
+        </button>
       </nav>
       </header>
       {qrDialog}

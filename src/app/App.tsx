@@ -12,11 +12,21 @@ import { Dashboard } from "../features/dashboard/Dashboard";
 import { AddItems } from "../features/add-items/AddItems";
 import { Inventory } from "../features/inventory/Inventory";
 import { Impact } from "../features/impact/Impact";
+import { AiSettings } from "../features/settings/AiSettings";
+import {
+  clearUserAiSettings,
+  loadUserAiSettings,
+  saveUserAiSettings,
+  type UserAiSettings,
+} from "../lib/ai/userAiSettings";
 import type { View } from "./types";
 
 function App() {
   const [view, setView] = useState<View>("dashboard");
   const [today, setToday] = useState(todayIso());
+  const [userAiSettings, setUserAiSettings] = useState<UserAiSettings | undefined>(
+    loadUserAiSettings,
+  );
   const {
     items,
     actions,
@@ -67,6 +77,7 @@ function App() {
             onRecordAction={recordAction}
             onNavigate={setView}
             onResetDemo={resetDemo}
+            userAiSettings={userAiSettings}
           />
         )}
         {view === "add" && (
@@ -75,6 +86,7 @@ function App() {
             onAdd={addManualItem}
             onNavigate={setView}
             onRecordPurchaseDecision={recordPurchaseDecision}
+            userAiSettings={userAiSettings}
           />
         )}
         {view === "inventory" && (
@@ -87,6 +99,19 @@ function App() {
           />
         )}
         {view === "impact" && <Impact impact={impact} pet={pet} />}
+        {view === "settings" && (
+          <AiSettings
+            settings={userAiSettings}
+            onSave={(settings) => {
+              saveUserAiSettings(settings);
+              setUserAiSettings(settings);
+            }}
+            onClear={() => {
+              clearUserAiSettings();
+              setUserAiSettings(undefined);
+            }}
+          />
+        )}
       </main>
 
       <Toast message={lastToast} onDismiss={dismissToast} />

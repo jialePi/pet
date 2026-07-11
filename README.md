@@ -64,6 +64,49 @@ npm run lint
 npm run build
 ```
 
+## Cloudflare Workers Deployment
+
+The production deployment serves the React build and the three `/api/*` AI routes
+from one Cloudflare Worker. Static assets are configured in `wrangler.jsonc`, while
+`worker/index.ts` handles recognition, coaching, and daily planning.
+`GET /api/health` reports whether the Worker is running in bring-your-own-key
+mode and whether an optional operator AI secret is configured, without exposing
+any secret.
+Static responses receive CSP, referrer, MIME-sniffing, framing, and permissions
+headers through `public/_headers`.
+
+Live deployment: https://pet-food-waste.jialepi-apps.workers.dev
+
+For local Worker development, create an ignored `.dev.vars` file:
+
+```bash
+GOOGLE_AI_API_KEY=your_key_here
+# Or use OPENAI_API_KEY instead.
+```
+
+Then run:
+
+```bash
+npm run dev:cloudflare
+```
+
+Before the first production deploy, authenticate Wrangler:
+
+```bash
+npx wrangler login
+npm run deploy
+```
+
+The public deployment uses a bring-your-own-key flow. Each user selects Google AI
+or OpenAI in **AI Settings** and enters their own key. The key is kept in browser
+session storage, sent only on AI requests, and forwarded by the Worker without
+being stored or returned. Model names remain non-secret Worker variables in
+`wrangler.jsonc`.
+
+For a private deployment, an operator may still configure `GOOGLE_AI_API_KEY` or
+`OPENAI_API_KEY` as a Wrangler secret. User-provided keys take precedence for that
+request. API keys must never be committed.
+
 ## Notes
 
 Food dates and plans are guidance only. The app must not be treated as a food safety authority; users should still check storage, packaging, smell, appearance, and local food safety guidance.

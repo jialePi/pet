@@ -161,6 +161,88 @@ main {
   padding: 1rem;
 }
 
+.settings-view {
+  background: #fffaf2;
+  border: 1px solid #e3dacb;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  gap: 1rem;
+}
+
+.settings-card,
+.privacy-card {
+  border: 1px solid #e3dacb;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #fffef9;
+}
+
+.settings-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.settings-card > svg,
+.privacy-card > svg {
+  color: #2f7d55;
+  width: 28px;
+  height: 28px;
+}
+
+.settings-card h2,
+.privacy-card h2,
+.settings-card p {
+  margin: 0;
+}
+
+.settings-card label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 700;
+}
+
+.settings-card input,
+.settings-card select {
+  width: 100%;
+  border: 1px solid #d9d2c5;
+  border-radius: 8px;
+  padding: 0.7rem;
+  background: white;
+}
+
+.api-key-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+
+.connection-chip {
+  align-self: center;
+  border-radius: 999px;
+  padding: 0.45rem 0.75rem;
+  font-weight: 800;
+  background: #eee8dd;
+}
+
+.connection-chip.connected {
+  background: #dcefdc;
+  color: #25613f;
+}
+
+.settings-message {
+  color: #25613f;
+  font-weight: 800;
+}
+
+.privacy-card li + li {
+  margin-top: 0.5rem;
+}
+
 .pet-room {
   min-height: 520px;
 }
@@ -1097,7 +1179,7 @@ progress {
   nav {
     width: 100%;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
   }
 
   .date-controls {
@@ -1127,6 +1209,10 @@ progress {
 
   .usage-task {
     flex-direction: column;
+  }
+
+  .settings-grid {
+    grid-template-columns: 1fr;
   }
 
   .usage-task button {
